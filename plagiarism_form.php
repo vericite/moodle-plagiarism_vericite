@@ -10,12 +10,24 @@ class plagiarism_setup_form extends moodleform {
 
         $mform =& $this->_form;
         $choices = array('No','Yes');
-        $mform->addElement('html', get_string('newexplain', 'plagiarism_new'));
-        $mform->addElement('checkbox', 'new_use', get_string('usenew', 'plagiarism_new'));
+        $mform->addElement('html', get_string('vericiteexplain', 'plagiarism_vericite'));
+        $mform->addElement('checkbox', 'vericite_use', get_string('usevericite', 'plagiarism_vericite'));
 
-        $mform->addElement('textarea', 'new_student_disclosure', get_string('studentdisclosure','plagiarism_new'),'wrap="virtual" rows="6" cols="50"');
-        $mform->addHelpButton('new_student_disclosure', 'studentdisclosure', 'plagiarism_new');
-        $mform->setDefault('new_student_disclosure', get_string('studentdisclosuredefault','plagiarism_new'));
+        $mform->addElement('textarea', 'vericite_student_disclosure', get_string('studentdisclosure','plagiarism_vericite'),'wrap="virtual" rows="6" cols="50"');
+        $mform->addHelpButton('vericite_student_disclosure', 'studentdisclosure', 'plagiarism_vericite');
+        $mform->setDefault('vericite_student_disclosure', get_string('studentdisclosuredefault','plagiarism_vericite'));
+
+	$mform->addElement('text', 'vericite_accountid', get_string('vericiteaccountid', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_accountid', 'vericiteaccountid', 'plagiarism_vericite');
+        $mform->addRule('vericite_accountid', null, 'required', null, 'client');
+
+        $mform->addElement('passwordunmask', 'vericite_secretkey', get_string('vericitesecretkey', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_secretkey', 'vericitesecretkey', 'plagiarism_vericite');
+        $mform->addRule('vericite_secretkey', null, 'required', null, 'client');
+
+	$mform->addElement('text', 'vericite_api', get_string('vericiteapi', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_api', 'vericiteapi', 'plagiarism_vericite');
+        $mform->addRule('vericite_api', null, 'required', null, 'client');
 
         $this->add_action_buttons(true);
     }

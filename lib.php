@@ -19,7 +19,7 @@
  * lib.php - Contains Plagiarism plugin specific functions called by Modules.
  *
  * @since 2.0
- * @package    plagiarism_new
+ * @package    plagiarism_vericite
  * @subpackage plagiarism
  * @copyright  2010 Dan Marsden http://danmarsden.com
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -34,7 +34,31 @@ global $CFG;
 require_once($CFG->dirroot.'/plagiarism/lib.php');
 
 ///// Turnitin Class ////////////////////////////////////////////////////
-class plagiarism_plugin_new extends plagiarism_plugin {
+class plagiarism_plugin_vericite extends plagiarism_plugin {
+     public function get_settings() {
+        static $plagiarismsettings;
+        if (!empty($plagiarismsettings) || $plagiarismsettings === false) {
+            return $plagiarismsettings;
+        }
+        $plagiarismsettings = (array)get_config('plagiarism');
+        // Check if enabled.
+        if (isset($plagiarismsettings['vericite_use']) && $plagiarismsettings['vericite_use']) {
+            // Now check to make sure required settings are set!
+            if (empty($plagiarismsettings['vericite_api'])) {
+                error("VeriCite API URL not set!");
+            }
+            if (empty($plagiarismsettings['vericite_accountid'])) {
+                error("VeriCite Account Id not set!");
+	    }
+            if (empty($plagiarismsettings['vericite_secret'])) {
+                error("VeriCite Secret not set!");
+	    }
+            return $plagiarismsettings;
+        } else {
+            return false;
+        }
+    }
+
      /**
      * hook to allow plagiarism specific information to be displayed beside a submission 
      * @param array  $linkarraycontains all relevant information for the plugin to generate a link
@@ -83,7 +107,7 @@ class plagiarism_plugin_new extends plagiarism_plugin {
         echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
         $formatoptions = new stdClass;
         $formatoptions->noclean = true;
-        echo format_text($plagiarismsettings['new_student_disclosure'], FORMAT_MOODLE, $formatoptions);
+        echo format_text($plagiarismsettings['vericite_student_disclosure'], FORMAT_MOODLE, $formatoptions);
         echo $OUTPUT->box_end();
     }
 

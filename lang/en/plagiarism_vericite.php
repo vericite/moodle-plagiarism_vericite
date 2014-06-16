@@ -16,15 +16,21 @@
 
 /**
  *
- * @package   plagiarism_new
+ * @package   plagiarism_vericite
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['studentdisclosuredefault']  ='All files uploaded will be submitted to a plagiarism detection service';
+$string['studentdisclosuredefault']  ='All files uploaded will be submitted to VeriCite, a plagiarism detection service';
 $string['studentdisclosure'] = 'Student Disclosure';
-$string['studentdisclosure_help'] = 'This text will be displayed to all students on the file upload page.';
-$string['newexplain'] = 'For more information on this plugin see: ';
-$string['new'] = 'New template plagiarism plugin';
-$string['usenew'] ='Enable New';
+$string['studentdisclosure_help'] = '';
+$string['vericiteexplain'] = 'For more information on this plugin see: ';
+$string['vericite'] = 'VeriCite plagiarism plugin';
+$string['usevericite'] ='Enable VeriCite';
 $string['savedconfigsuccess'] = 'Plagiarism Settings Saved';
+$string['vericiteaccountid'] = 'Account Id';
+$string['vericiteaccountid_help'] = 'This is the id given to you from Longsight';
+$string['vericitesecretkey'] = 'Secret Key';
+$string['vericitesecretkey_help'] = 'This is the secret given to you from Longsight';
+$string['vericiteapi'] = 'API URL';
+$string['vericiteapi_help'] = 'This is the API url given to you from Longsight';
