@@ -29,7 +29,18 @@ class plagiarism_setup_form extends moodleform {
         $mform->addHelpButton('vericite_api', 'vericiteapi', 'plagiarism_vericite');
         $mform->addRule('vericite_api', null, 'required', null, 'client');
 
-        $this->add_action_buttons(true);
+        $mform->addElement('html', get_string('vericitedefaultsettings', 'plagiarism_vericite') . "<br/>");
+
+        $mform->addElement('checkbox', 'vericite_use_default', get_string('usevericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_use_default', 'usevericite', 'plagiarism_vericite');
+        
+        $mform->addElement('checkbox', 'vericite_student_score_default', get_string('studentscorevericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_student_score_default', 'studentscorevericite', 'plagiarism_vericite');
+	
+        $mform->addElement('checkbox', 'vericite_student_report_default', get_string('studentreportvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_student_report_default', 'studentreportvericite', 'plagiarism_vericite');
+	
+	$this->add_action_buttons(true);
     }
 }
 
