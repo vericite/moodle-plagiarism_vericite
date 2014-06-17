@@ -20,6 +20,7 @@ class plagiarism_setup_form extends moodleform {
 	$mform->addElement('text', 'vericite_accountid', get_string('vericiteaccountid', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_accountid', 'vericiteaccountid', 'plagiarism_vericite');
         $mform->addRule('vericite_accountid', null, 'required', null, 'client');
+	$mform->setType('vericite_accountid', PARAM_TEXT);
 
         $mform->addElement('passwordunmask', 'vericite_secretkey', get_string('vericitesecretkey', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_secretkey', 'vericitesecretkey', 'plagiarism_vericite');
@@ -28,6 +29,7 @@ class plagiarism_setup_form extends moodleform {
 	$mform->addElement('text', 'vericite_api', get_string('vericiteapi', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_api', 'vericiteapi', 'plagiarism_vericite');
         $mform->addRule('vericite_api', null, 'required', null, 'client');
+	$mform->setType('vericite_api', PARAM_URL);
 
         $mform->addElement('html', get_string('vericitedefaultsettings', 'plagiarism_vericite') . "<br/>");
 

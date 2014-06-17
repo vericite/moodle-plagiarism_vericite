@@ -20,7 +20,6 @@
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 $string['pluginname'] = 'VeriCite';
 $string['studentdisclosuredefault']  ='All files uploaded will be submitted to VeriCite, a plagiarism detection service';
 $string['studentdisclosure'] = 'Student Disclosure';
@@ -40,11 +39,10 @@ $string['vericitedefaultsettings'] = 'Default settings for new assignments:';
 $string['usevericite_help'] = 'This setting will be the default setting when creating a new assignment.  Select checkbox if you want new assignments to use VeriCite by default.';
 $string['usevericite'] = 'Use VeriCite Plagiarism Service';
 $string['studentscorevericite'] = 'Allow students to see scores';
-$string['defaultAssignment'] = 'This setting will be the default setting when creating a new assignment.'
+$string['defaultAssignment'] = 'This setting will be the default setting when creating a new assignment.';
 $string['studentscorevericite_help'] = 'Select checkbox if you want to allow students to see their scores.';
 $string['studentreportvericite'] = 'Allow students to see reports';
 $string['studentreportvericite_help'] = 'Select checkbox if you want to allow students to see their reports.';
-
 
 
 

@@ -22,7 +22,6 @@ pl * plagiarism.php - allows the admin to configure plagiarism stuff
  * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
     require_once(dirname(dirname(__FILE__)) . '/../config.php');
     require_once($CFG->libdir.'/adminlib.php');
     require_once($CFG->libdir.'/plagiarismlib.php');
@@ -31,11 +30,9 @@ pl * plagiarism.php - allows the admin to configure plagiarism stuff
 
     require_login();
     admin_externalpage_setup('plagiarismvericite');
-
-    $context = get_context_instance(CONTEXT_SYSTEM);
+    $context = context_system::instance();
 
     require_capability('moodle/site:config', $context, $USER->id, true, "nopermissions");
-
     require_once('plagiarism_form.php');
     $mform = new plagiarism_setup_form();
     $plagiarismplugin = new plagiarism_plugin_vericite();
@@ -45,7 +42,6 @@ pl * plagiarism.php - allows the admin to configure plagiarism stuff
     }
 
     echo $OUTPUT->header();
-
     if (($data = $mform->get_data()) && confirm_sesskey()) {
         if (!isset($data->vericite_use)) {
             $data->vericite_use = 0;

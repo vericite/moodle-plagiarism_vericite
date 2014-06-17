@@ -72,24 +72,24 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	$vericite['cmid'] = $linkarray['cmid'];
         $vericite['userid'] = $linkarray['userid'];
 	if (!empty($linkarray['content'])) {
-            $linkarray['content'] = '<html>' . $linkarray['content'] . '</html>';
-            $vericite['filename'] = "Inline Submission";
-            $vericite['filetype'] = "inline";
-            $vericite['fileid'] = sha1($linkarray['content']);
-            $vericite['filepath'] = "";
+            $file = new stdclass();
+	    $linkarray['content'] = '<html>' . $linkarray['content'] . '</html>';
+            $file->filename = "Inline Submission";
+            $file->type = "inline";
+            $file->identifier = sha1($linkarray['content']);
+            $file->filepath = "";
+	    $vericite['file'] = $file;
 	} else if (!empty($linkarray['file'])) {
-            $vericite['filename'] = $linkarray['file']->get_filename();
-            $vericite['filetype'] = "file";
-	    $vericite['fileid'] = $linkarray['file']->get_pathnamehash();
-            $vericite['filepath'] =  $linkarray['file']->get_filepath();
+	    $file = new stdclass();
+            $file->filename = $linkarray['file']->get_filename();
+            $file->type = "file";
+	    $file->identifier = $linkarray['file']->get_pathnamehash();
+            $file->filepath =  $linkarray['file']->get_filepath();
+	    $vericite['file'] = $file;
         }
 	$output = '';
         //add link/information about this file to $output
-	foreach($vericite as $key => $value){
-		$output .= $key . "=>" . $value . "<br/>";
-	}
-/*
-      	$results = $this->get_file_results($cmid, $userid, $file);
+      	$results = $this->get_file_results($vericite['cmid'], $vericite['userid'], $file, $vericite);
         if (empty($results)) {
             // no results
             return '<br />';
@@ -107,9 +107,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
         } else {
             // User only sees similarity score
-            $output = '<span class="plagiarismreport">' . get_string('similarity', 'plagiarism_turnitin') . $similaritystring . '</span>';
+            $output = '<span class="plagiarismreport">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
         }
- */
+
 echo "<pre>"; 
 	print_r($linkarray);
 echo "</pre>"; 
@@ -117,7 +117,7 @@ echo "</pre>";
     }
 
 
-    public function get_file_results($cmid, $userid, $file) {
+    public function get_file_results($cmid, $userid, $file, $vericite=null) {
         global $DB, $USER, $COURSE, $OUTPUT;
 
         $plagiarismsettings = $this->get_settings();
@@ -125,18 +125,17 @@ echo "</pre>";
             // VeriCite is not enabled
             return false;
         }
-        $plagiarismvalues = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$cmid), '', 'name,value');
+        $plagiarismvalues = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$vericite['cmid']), '', 'name,value');
         if (empty($plagiarismvalues['use_vericite'])) {
             // VeriCite not in use for this cm
             return false;
         }
 
-        $filehash = $file->identifier;
-        $modulesql = 'SELECT m.id, m.name, cm.instance'.
+/*        $modulesql = 'SELECT m.id, m.name, cm.instance'.
                 ' FROM {course_modules} cm' .
                 ' INNER JOIN {modules} m on cm.module = m.id ' .
                 'WHERE cm.id = ?';
-        $moduledetail = $DB->get_record_sql($modulesql, array($cmid));
+        $moduledetail = $DB->get_record_sql($modulesql, array($vericite['cmid']));
         if (!empty($moduledetail)) {
             $module = $DB->get_record($moduledetail->name, array('id'=>$moduledetail->instance));
         }
@@ -144,13 +143,18 @@ echo "</pre>";
             // No such cmid
             return false;
         }
-
-        $modulecontext = get_context_instance(CONTEXT_MODULE, $cmid);
+*/
+        $modulecontext = context_module::instance($vericite['cmid']);
 
         // Whether the user has permissions to see all items in the context of this module.
-        $viewsimilarityscore = has_capability('plagiarism/vericite:viewsimilarityscore', $modulecontext);
-        $viewfullreport = has_capability('plagiarism/vericite:viewfullreport', $modulecontext);
-        if ($USER->id == $userid) {
+        // this is determined by whether the user is a "course instructor" if they have assignment:grade
+
+	$gradeassignment = has_capability('mod/assign:grade', $modulecontext);
+	
+	$viewsimilarityscore = $gradeassignment;
+	$viewfullreport = $gradeassignment;
+
+        if ($USER->id == $vericite['userid']) {
             // The user wants to see details on their own report
             if ($plagiarismvalues['plagiarism_show_student_score'] == 1) {
                 $viewsimilarityscore = true;
@@ -166,7 +170,7 @@ echo "</pre>";
         }
 
         $plagiarismfile = $DB->get_record('plagiarism_vericite_files',
-                array('cm' => $cmid, 'userid' => $userid, 'identifier' => $filehash));
+                array('cm' => $vericite['cmid'], 'userid' => $vericite['userid'], 'identifier' => $vericite['file']->identifier));
         if (empty($plagiarismfile)) {
             // No record of that submission - so no links can be returned
             return false;
@@ -176,7 +180,7 @@ echo "</pre>";
                 'score' => '',
                 'reporturl' => '',
                 );
-        if (isset($plagiarismfile->statuscode) && $plagiarismfile->statuscode != 'success') {
+        /*if (isset($plagiarismfile->statuscode) && $plagiarismfile->statuscode != 'success') {
             //always display errors - even if the student isn't able to see report/score.
             $results['error'] = vericite_error_text($plagiarismfile->statuscode);
             return $results;
@@ -188,10 +192,7 @@ echo "</pre>";
             // User gets to see link to similarity report
             $results['reporturl'] = vericite_get_report_link($plagiarismfile, $COURSE, $plagiarismsettings);
         }
-
-        if (!empty($plagiarismsettings['turnitin_enablegrademark'])) {
-            $results['grademarklink'] = turnitin_get_grademark_link($plagiarismfile, $COURSE, $module, $plagiarismsettings);
-        }
+*/
         return $results;
     }
 
@@ -241,7 +242,28 @@ echo "</pre>";
      * @param object $data - data from an mform submission.
     */
     public function save_form_elements($data) {
+	global $DB;
+	if (!$this->get_settings()) {
+            return;
+        }
+	    //array of posible plagiarism config options.
+            $plagiarismelements = $this->config_options();
+	    //array of posible plagiarism config options.
+            //first get existing values
+	    $existingelements = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$data->coursemodule), '', 'name,id');
+	    foreach ($plagiarismelements as $element) {
+                $newelement = new object();
+                $newelement->cm = $data->coursemodule;
+                $newelement->name = $element;
+                $newelement->value = (isset($data->$element) ? $data->$element : 0);
+		if (isset($existingelements[$element])) { //update
+                    $newelement->id = $existingelements[$element];
+                    $DB->update_record('plagiarism_vericite_config', $newelement);
+                } else { //insert
+                    $DB->insert_record('plagiarism_vericite_config', $newelement);
+                }
 
+            }
     }
 
     /**
@@ -249,7 +271,7 @@ echo "</pre>";
      * @param object $mform  - Moodle form
      * @param object $context - current context
      */
-    public function get_form_elements_module($mform, $context) {
+    public function get_form_elements_module($mform, $context, $modulename = '') {
 	global $CFG, $DB;
 	$plagiarismsettings = $this->get_settings();
         if (!$plagiarismsettings) {
@@ -277,7 +299,7 @@ echo "</pre>";
         }else if(isset($plagiarismsettings['vericite_student_score_default'])){
                 $mform->setDefault('plagiarism_show_student_score', $plagiarismsettings['vericite_student_score_default']);
         }
-	$mform->addElement('checkbox', 'plagiarism_show_student_report', get_string("studentreportvericite", "plagiarism_turnitin"));
+	$mform->addElement('checkbox', 'plagiarism_show_student_report', get_string("studentreportvericite", "plagiarism_vericite"));
 	$mform->addHelpButton('plagiarism_show_student_report', 'studentreportvericite', 'plagiarism_vericite');
 	$mform->disabledIf('plagiarism_show_student_report', 'use_vericite');
 	if(isset($plagiarismvalues['plagiarism_show_student_report'])){
