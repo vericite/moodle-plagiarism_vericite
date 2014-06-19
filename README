@@ -1,3 +1,6 @@
 README
 --------
 
+Create directory in moodledata folder:  {moodledata}/plagiarism
+*make sure it has the same permissions and owners as the rest of moodledata
+
