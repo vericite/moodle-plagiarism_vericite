@@ -37,6 +37,11 @@ require_once($CFG->dirroot.'/plagiarism/lib.php');
 $SCORE_CACHE = array();
 $SCORE_CACHE_MINS = 5;
 
+//contextId -> {token, date}
+$TOKEN_CACHE = array();
+$TOKEN_CACHE_MINS = 20;
+
+
 class plagiarism_plugin_vericite extends plagiarism_plugin {
 
      public function get_settings() {
@@ -177,9 +182,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	//SCORE_CACHE = cmid -> {user -> {fileId - > Object{score, date}}}
 	$fileId = $vericite['file']->identifier;
 	$score = -1;
-	echo("<pre>");
-	print_r($SCORE_CACHE);
-	echo("</pre>");
 	if(isset($SCORE_CACHE[$cmid])
 		&& isset($SCORE_CACHE[$cmid][$userid])
 		&& isset($SCORE_CACHE[$cmid][$userid][$fileId])){
@@ -187,10 +189,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		if(time() - (60 * $SCORE_CACHE_MIN) > $SCORE_CACHE[$cmid][$userid][$fileId]['date']){
 			//cache object has expired, try to look it back up
 			unset($SCORE_CACHE[$cmid][$userid][$fileId]);
-			echo("cleared cache");
 		}else{
 			$score = $SCORE_CACHE[$cmid][$userid][$fileId]['score'];
-			echo("found in cache<br/>");
 		}
 	}
 	if($score < 0){
@@ -223,7 +223,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		}
 		//create a tmp file to store data:
 		$filename = $CFG->dataroot."/plagiarism/".time().$vericite['file']->filename;
-		echo("filename: " . $filename);
 		$fh = fopen($filename, 'w');
 		fwrite($fh, $vericite['file']->content);
 		fclose($fh);
@@ -231,8 +230,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		try {
                 	$c = new curl(array('proxy'=>true));
                 	$status = json_decode($c->post($url, $fields));
-			echo("RESULTS: ");
-			print_r($status);
 		} catch (Exception $e) {
         	}
 		unlink($filename);
@@ -246,7 +243,52 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		//we have successfully found the score and it has been evaluated:
 		$results['analyzed'] = 1;
 		$results['score'] = $score;
-		echo($score);
+		if($viewfullreport){
+			//need to generate the access url:
+			//first look for token in the cache:
+			if($gradeassignment && isset($TOKEN_CACHE[$USER->id])){
+				//only instructors can see all items
+				if(time() - (60 * $TOKEN_CACHE_MIN) > $TOKEN_CACHE[$USER->id]['date']){
+					//unset cache , so that the cache will be updated
+					unset($TOKEN_CACHE[$USER->id]);
+				}else{
+					$token = $TOKEN_CACHE[$USER->id]['token'];
+				}
+			}
+			if(!isset($token)){
+				//didn't find it in cache, get a new token
+				$url = vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
+				$fields = array();
+				$fields['consumer'] = $plagiarismsettings['vericite_accountid'];
+	                	$fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
+				if(!$gradeassignment){
+					//non instructors can only see their own items
+					$fields['externalContentId'] = $fileId;
+				}
+				$fields['tokenRequest'] = 'true';
+				$c = new curl(array('proxy'=>true));
+	                        $status = json_decode($c->post($url, $fields));
+				if(!empty($status) && isset($status->token)){
+					$token = $status->token;
+				}
+				if(isset($token)){
+					//create url for user:
+					unset($fields['consumerSecret']);
+					unset($fields['tokenRequest']);
+					$fields['token'] = $token;
+					$fields['externalContentId'] = $fileId;
+					$fields['viewReport'] = 'true';
+					$urlParams = "";
+					foreach($fields as $key => $value){
+						if(!empty($urlParams)){
+							$urlParams .= "&";
+						}
+						$urlParams .= $key . "=" . rawurlencode($value);
+					}
+					$results['reporturl'] = $url . "?" . $urlParams;
+				}
+			}
+		}
 	}
         return $results;
     }
@@ -392,30 +434,15 @@ function vericite_get_scores($plagiarismsettings, $courseId, $cmid, $fileId, $us
 	$fields['externalContentId'] = $fileId;
 	$json = $c->post($url, $fields);
 	$scores = json_decode($json);
-	echo("<pre>");
-	print_r($scores);
 	//store results in the cache and set $score if you find the appropriate file score
 	if(!empty($scores)){
 		foreach($scores as $resultUserId => $resultUserScores){
-			print_r($resultUserId);
-			print_r($resultUserScores);
 			foreach($resultUserScores as $resultCMID => $resultCMIDScores){
-				print_r($resultCMID);
-				print_r($resultCMIDScores);
 				foreach($resultCMIDScores as $resultContentId => $resultContentScore){
-					print_r($resultContentId);
-					print_r($resultContentScore);
 					$scoreArray = array();
 					$scoreArray['score'] = $resultContentScore;
 					$scoreArray['date'] = time();
 					$SCORE_CACHE[$resultCMID][$resultUserId][$resultContentId] = $scoreArray;
-					echo("storing into cache: <br/>");
-					print_r($scoreArray);
-					echo("<br/>");
-					echo("resultContentId: " . $resultContentId . "<br/>");
-					echo("fileId: " . $fileId . "<br/>");
-					echo("resultUserId: " . $resultUserId . "<br/>");
-					echo("userid: " . $userid . "<br/>");	
 					if($resultContentId == $fileId && $resultUserId == $userid){
 						//we found this file's score, so set it:
 						$score = $resultContentScore;
@@ -424,8 +451,6 @@ function vericite_get_scores($plagiarismsettings, $courseId, $cmid, $fileId, $us
 			}
 		}
 	}	
-	echo("<br/>score: " . $score . "<br/>");
-	echo("</pre>");
     	return $score;
 }
 
@@ -435,7 +460,7 @@ function endsWith($str, $test)
     return substr_compare($str, $test, -strlen($test), strlen($test)) === 0;
 }
 
-function vericite_generate_url($url, $context, $assignment, $user=null){
+function vericite_generate_url($url, $context, $assignment=null, $user=null){
      if(!endsWith($url, "/")){
             $url .= "/";
      }
