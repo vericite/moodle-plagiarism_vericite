@@ -30,7 +30,7 @@
         <KEY NAME="cm" TYPE="foreign" FIELDS="cm" REFTABLE="course_modules" REFFIELDS="id" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
-   <TABLE NAME="plagiarism_vericite_token" COMMENT="info about submitted files" PREVIOUS="plagiarism_vericite_files">
+   <TABLE NAME="plagiarism_vericite_tokens" COMMENT="info about submitted files" PREVIOUS="plagiarism_vericite_files">
       <FIELDS>
 	<FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="cm"/>
         <FIELD NAME="cm" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>

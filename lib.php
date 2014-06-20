@@ -75,7 +75,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	if(!empty($linkarray['assignment']) && !is_number($linkarray['assignment'])){
 		$vericite['assignmentTitle'] = $linkarray['assignment']->name;
 	}
-	if (!empty($linkarray['content'])) {
+	if (!empty($linkarray['content']) && trim($linkarray['content']) != false) {
             $file = new stdclass();
 	    $linkarray['content'] = '<html>' . $linkarray['content'] . '</html>';
             $file->filename = "InlineSubmission";
@@ -121,13 +121,13 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             // User only sees similarity score
             $output = '<span class="plagiarismreport">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
         }
-        return $output . "<br/>";
+        return "<br/>" . $output . "<br/>";
     }
 
 
     public function get_file_results($cmid, $userid, $file, $vericite=null) {
         global $DB, $USER, $COURSE, $OUTPUT, $CFG;
-     	$SCORE_CACHE_MIN = 5;
+     	$SCORE_CACHE_MIN = 20;
 	$TOKEN_CACHE_MIN = 20;
         $plagiarismsettings = $this->get_settings();
         if (empty($plagiarismsettings)) {
@@ -146,7 +146,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         // this is determined by whether the user is a "course instructor" if they have assignment:grade
 
 	$gradeassignment = has_capability('mod/assign:grade', $modulecontext);
-	
+	echo("<br/>Can Grade: " . $gradeassignment . "<br/>");	
 	$viewsimilarityscore = $gradeassignment;
 	$viewfullreport = $gradeassignment;
 
@@ -215,10 +215,14 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			$vericite['file']->content = (!empty($file->filepath)) ? file_get_contents($file->filepath) : $file->get_content();	
 		}
 		//create a tmp file to store data:
+		if (!check_dir_exists($CFG->dataroot."/plagiarism/", true, true)) {
+        		mkdir($CFG->dataroot."/plagiarism/", 0700);
+		}
 		$filename = $CFG->dataroot."/plagiarism/".time().$vericite['file']->filename;
 		$fh = fopen($filename, 'w');
 		fwrite($fh, $vericite['file']->content);
 		fclose($fh);
+		$fields['fileName'] = $vericite['file']->filename;
 		$fields['filedata'] = '@' . $filename;
 		try {
                 	$c = new curl(array('proxy'=>true));
@@ -226,7 +230,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		} catch (Exception $e) {
         	}
 		unlink($filename);
-	
+
 		//now that we submitted the file, let's see if we can get the score:
 		$score = vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileId, $userid);
 	}
@@ -264,6 +268,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				if(!$gradeassignment){
 					//non instructors can only see their own items
 					$fields['externalContentId'] = $fileId;
+				}else{
+					//send over the param for role so that instructors can see more details:
+					$fields['userRole'] = 'Instructor';	
 				}
 				$fields['tokenRequest'] = 'true';
 				$c = new curl(array('proxy'=>true));
@@ -306,6 +313,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				$fields['token'] = $token;
 				$fields['externalContentId'] = $fileId;
 				$fields['viewReport'] = 'true';
+				if($gradeassignment){
+					$fields['userRole'] = 'Instructor';
+				}
 				$urlParams = "";
 				foreach($fields as $key => $value){
 					if(!empty($urlParams)){
@@ -316,6 +326,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				$results['reporturl'] = $url . "?" . $urlParams;
 			}
 		}
+	}else{
+		return false;
 	}
         return $results;
     }
