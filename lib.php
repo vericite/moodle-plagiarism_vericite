@@ -32,15 +32,6 @@ if (!defined('MOODLE_INTERNAL')) {
 //get global class
 global $CFG;
 require_once($CFG->dirroot.'/plagiarism/lib.php');
-	
-// cmid -> {user -> {contentId - > Object{score, date}}}
-$SCORE_CACHE = array();
-$SCORE_CACHE_MINS = 5;
-
-//contextId -> {token, date}
-$TOKEN_CACHE = array();
-$TOKEN_CACHE_MINS = 20;
-
 
 class plagiarism_plugin_vericite extends plagiarism_plugin {
 
@@ -135,7 +126,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
 
     public function get_file_results($cmid, $userid, $file, $vericite=null) {
-        global $DB, $USER, $COURSE, $OUTPUT, $CFG, $SCORE_CACHE, $SCORE_CACHE_MIN;
+        global $DB, $USER, $COURSE, $OUTPUT, $CFG;
+     	$SCORE_CACHE_MIN = 5;
+	$TOKEN_CACHE_MIN = 20;
         $plagiarismsettings = $this->get_settings();
         if (empty($plagiarismsettings)) {
             // VeriCite is not enabled
@@ -179,18 +172,18 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 );
 
 	//first check if we already have looked up the score for this class
-	//SCORE_CACHE = cmid -> {user -> {fileId - > Object{score, date}}}
 	$fileId = $vericite['file']->identifier;
 	$score = -1;
-	if(isset($SCORE_CACHE[$cmid])
-		&& isset($SCORE_CACHE[$cmid][$userid])
-		&& isset($SCORE_CACHE[$cmid][$userid][$fileId])){
-		//we have already looked up this score recently, check that it isn't expired:
-		if(time() - (60 * $SCORE_CACHE_MIN) > $SCORE_CACHE[$cmid][$userid][$fileId]['date']){
-			//cache object has expired, try to look it back up
-			unset($SCORE_CACHE[$cmid][$userid][$fileId]);
-		}else{
-			$score = $SCORE_CACHE[$cmid][$userid][$fileId]['score'];
+	
+	$contentScore = $DB->get_records('plagiarism_vericite_files', array('cm'=>$vericite['cmid'], 'userid'=>$userid, 'identifier'=>$fileId), '', 'similarityscore, timeretrieved');
+	if(!empty($contentScore) && sizeof($contentScore) == 1){
+		foreach($contentScore as $content){
+			if(time() - (60 * $SCORE_CACHE_MIN) < $content->timeretrieved){
+				//since our reports are dynamic, only use the db as a cache
+				//if its too old of a results, don't set the score and just grab a new one
+				//from the API
+				$score = $content->similarityscore;
+			}
 		}
 	}
 	if($score < 0){
@@ -244,17 +237,24 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		$results['analyzed'] = 1;
 		$results['score'] = $score;
 		if($viewfullreport){
-			//need to generate the access url:
-			//first look for token in the cache:
-			if($gradeassignment && isset($TOKEN_CACHE[$USER->id])){
-				//only instructors can see all items
-				if(time() - (60 * $TOKEN_CACHE_MIN) > $TOKEN_CACHE[$USER->id]['date']){
-					//unset cache , so that the cache will be updated
-					unset($TOKEN_CACHE[$USER->id]);
-				}else{
-					$token = $TOKEN_CACHE[$USER->id]['token'];
-				}
+			//see if the token already exists
+			$conditions = array('cm'=>$vericite['cmid'], 'userid'=>$USER->id);
+			if(!$gradeassignment){
+				//instructors can view anything in the site, so don't pass in the identifier
+				//however, this isn't an instructor, so look it up by the fileid
+				$conditions['identifier'] = $fileId;
 			}
+			$dbTokens = $DB->get_records('plagiarism_vericite_tokens', $conditions);
+			foreach($dbTokens as $dbToken){
+				//instructors can have multiple tokens, see if any of them aren't expired
+				//if it's not an instructor, there should only be one token in the array anyways
+				if(time() - (60 * $TOKEN_CACHE_MIN) < $dbToken->timeretrieved){
+					//we found an existing token, set token and break out
+					$token = $dbToken->token;
+					break;
+				}	
+			}	
+			$url = vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
 			if(!isset($token)){
 				//didn't find it in cache, get a new token
 				$url = vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
@@ -270,23 +270,50 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	                        $status = json_decode($c->post($url, $fields));
 				if(!empty($status) && isset($status->token)){
 					$token = $status->token;
+					
+					//store token in db to use again:
+                       			$id = -1;
+					foreach($dbTokens as $dbToken){
+                               			if($dbToken->cm == $cmid && $dbToken->userid == $USER->id
+                                       			&& ($gradeassignment || $dbToken->identifier == $fileId)){
+                                      			//we found an existing score in the db, update it
+                                       			$id = $dbToken->id;
+                               			}
+						//this is a matched db item from the query above,
+						//so we should update the token id and time no matter what
+						$dbToken->token = $token;
+						$dbToken->timeretrieved = time();
+						$DB->update_record('plagiarism_vericite_tokens', $dbToken);
+                       			}
+	                        	if ($id < 0) { //token doesn't already exist, add it
+						$newelement = new object();
+						$newelement->cm = $cmid;
+                                       		$newelement->userid = $USER->id;
+						if(!$gradeassignment){
+							//not an instructor, so make sure the token set the fileid
+                                       			$newelement->identifier = $fileId;
+                                       		}
+						$newelement->timeretrieved = time();
+						$newelement->token = $token;
+                               			$DB->insert_record('plagiarism_vericite_tokens', $newelement);
+                       			}
 				}
-				if(isset($token)){
-					//create url for user:
-					unset($fields['consumerSecret']);
-					unset($fields['tokenRequest']);
-					$fields['token'] = $token;
-					$fields['externalContentId'] = $fileId;
-					$fields['viewReport'] = 'true';
-					$urlParams = "";
-					foreach($fields as $key => $value){
-						if(!empty($urlParams)){
-							$urlParams .= "&";
-						}
-						$urlParams .= $key . "=" . rawurlencode($value);
+			}
+			if(isset($token)){
+				//create url for user:
+				$fields = array();
+				$fields['consumer'] = $plagiarismsettings['vericite_accountid'];
+				$fields['token'] = $token;
+				$fields['externalContentId'] = $fileId;
+				$fields['viewReport'] = 'true';
+				$urlParams = "";
+				foreach($fields as $key => $value){
+					if(!empty($urlParams)){
+						$urlParams .= "&";
 					}
-					$results['reporturl'] = $url . "?" . $urlParams;
+					$urlParams .= $key . "=" . rawurlencode($value);
 				}
+				$results['reporturl'] = $url . "?" . $urlParams;
 			}
 		}
 	}
@@ -424,7 +451,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 }
 
 function vericite_get_scores($plagiarismsettings, $courseId, $cmid, $fileId, $userid){
-	global $SCORE_CACHE;
+	global $DB;
 	$score = -1;
 	$c = new curl(array('proxy'=>true));
 	$url = vericite_generate_url($plagiarismsettings['vericite_api'], $courseId, $cmid);
@@ -435,14 +462,18 @@ function vericite_get_scores($plagiarismsettings, $courseId, $cmid, $fileId, $us
 	$json = $c->post($url, $fields);
 	$scores = json_decode($json);
 	//store results in the cache and set $score if you find the appropriate file score
+	$apiScores = array();
 	if(!empty($scores)){
 		foreach($scores as $resultUserId => $resultUserScores){
 			foreach($resultUserScores as $resultCMID => $resultCMIDScores){
 				foreach($resultCMIDScores as $resultContentId => $resultContentScore){
-					$scoreArray = array();
-					$scoreArray['score'] = $resultContentScore;
-					$scoreArray['date'] = time();
-					$SCORE_CACHE[$resultCMID][$resultUserId][$resultContentId] = $scoreArray;
+					$newelement = new object();
+					$newelement->cm = $resultCMID;
+					$newelement->userid = $resultUserId;
+					$newelement->identifier = $resultContentId;
+					$newelement->similarityscore = $resultContentScore;
+					$newelement->timeretrieved = time();
+					$apiScores = array_merge($apiScores, array($newelement));
 					if($resultContentId == $fileId && $resultUserId == $userid){
 						//we found this file's score, so set it:
 						$score = $resultContentScore;
@@ -451,7 +482,29 @@ function vericite_get_scores($plagiarismsettings, $courseId, $cmid, $fileId, $us
 			}
 		}
 	}	
-    	return $score;
+    	if(!empty($apiScores)){
+		//we found some scores, let's update the DB:
+		$dbScores = $DB->get_records('plagiarism_vericite_files', array('cm'=>$cmid), '', 'id, cm, userid, identifier, similarityscore, timeretrieved');
+		foreach($apiScores as $apiScore){
+			$id = -1;
+			foreach($dbScores as $dbScore){
+				if($dbScore->cm == $apiScore->cm && $dbScore->userid == $apiScore->userid 
+					&& $dbScore->identifier == $apiScore->identifier){
+					//we found an existing score in the db, update it
+					$id = $dbScore->id;
+					break;
+				}
+			}
+			if ($id >= 0) { //update
+				$apiScore->id = $id;
+				$DB->update_record('plagiarism_vericite_files', $apiScore);
+			} else { //insert
+				$DB->insert_record('plagiarism_vericite_files', $apiScore);
+			}
+		}
+	}
+
+	return $score;
 }
 
 
