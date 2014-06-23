@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 $plugin->version =  2014062300;
-$plugin->requires = 2010042803;
+$plugin->requires = 2013051406;
 $plugin->component = 'plagiarism_vericite';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = "1.0";
