@@ -4,7 +4,6 @@ $handlers = array (
 
 /*
  * Event Handlers
- */
     'assessable_file_uploaded' => array (
         'handlerfile'      => '/plagiarism/vericite/lib.php',
         'handlerfunction'  => 'event_file_uploaded',
@@ -30,5 +29,6 @@ $handlers = array (
         'handlerfunction'  => 'event_mod_deleted',
         'schedule'         => 'cron'
     ),
+ */
 
 );
