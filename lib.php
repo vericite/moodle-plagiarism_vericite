@@ -146,7 +146,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         // this is determined by whether the user is a "course instructor" if they have assignment:grade
 
 	$gradeassignment = has_capability('mod/assign:grade', $modulecontext);
-	echo("<br/>Can Grade: " . $gradeassignment . "<br/>");	
 	$viewsimilarityscore = $gradeassignment;
 	$viewfullreport = $gradeassignment;
 
