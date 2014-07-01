@@ -43,25 +43,23 @@ pl * plagiarism.php - allows the admin to configure plagiarism stuff
 
     echo $OUTPUT->header();
     if (($data = $mform->get_data()) && confirm_sesskey()) {
-        if (!isset($data->vericite_use)) {
+        //set checkboxes to 0 is they aren't set
+	if (!isset($data->vericite_use)) {
             $data->vericite_use = 0;
         }
-        foreach ($data as $field=>$value) {
+        if (!isset($data->vericite_use_default)) {
+            $data->vericite_use_default = 0;
+        }
+        if (!isset($data->vericite_student_score_default)) {
+            $data->vericite_student_score_default = 0;
+        }
+        if (!isset($data->vericite_student_report_default)) {
+            $data->vericite_student_report_default = 0;
+        }
+        //save each setting
+	foreach ($data as $field=>$value) {
             if (strpos($field, 'vericite')===0) {
-                if ($tiiconfigfield = $DB->get_record('config_plugins', array('name'=>$field, 'plugin'=>'plagiarism'))) {
-                    $tiiconfigfield->value = $value;
-                    if (! $DB->update_record('config_plugins', $tiiconfigfield)) {
-                        error("errorupdating");
-                    }
-                } else {
-                    $tiiconfigfield = new stdClass();
-                    $tiiconfigfield->value = $value;
-                    $tiiconfigfield->plugin = 'plagiarism';
-                    $tiiconfigfield->name = $field;
-                    if (! $DB->insert_record('config_plugins', $tiiconfigfield)) {
-                        error("errorinserting");
-                    }
-                }
+                set_config($field, $value, 'plagiarism');
             }
         }
         notify(get_string('savedconfigsuccess', 'plagiarism_vericite'), 'notifysuccess');

@@ -110,7 +110,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         if (array_key_exists('error', $results)) {
             return $results['error'];
         }
-	$rank = plagiarism_get_css_rank($results['score']);
+	$rank = plagiarism_vericite_get_css_rank($results['score']);
 
         $similaritystring = '&nbsp;<span class="' . $rank . '">' . $results['score'] . '%</span>';
         if (!empty($results['reporturl'])) {
@@ -187,13 +187,13 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	}
 	if($score < 0){
 		//ok, we couldn't find the score in the cache, try to look it up with the webservice
-		$score = vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileId, $userid);
+		$score = plagiarism_vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileId, $userid);
 	}
 	if($score < 0){
 		//ok can't find the score in the cache or from the service,
 		//try submitting the file then re-retreive the score
 
-		$url = vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $cmid, $userid);
+		$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $cmid, $userid);
         	$fields = array();
 		//full user record needed
 		$user = ($userid == $USER->id ? $USER : $DB->get_record('user', array('id'=>$userid)));
@@ -231,7 +231,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		unlink($filename);
 
 		//now that we submitted the file, let's see if we can get the score:
-		$score = vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileId, $userid);
+		$score = plagiarism_vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileId, $userid);
 	}
 
 			
@@ -257,10 +257,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					break;
 				}	
 			}	
-			$url = vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
+			$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
 			if(!isset($token)){
 				//didn't find it in cache, get a new token
-				$url = vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
+				$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
 				$fields = array();
 				$fields['consumer'] = $plagiarismsettings['vericite_accountid'];
 	                	$fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
@@ -329,26 +329,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		return false;
 	}
         return $results;
-    }
-
-    function vericite_get_report_link($file, $course, $plagiarismsettings, $isInstructor=false){
-	$contextId = $course->id;
-    }
-
-    function vericite_error_text($statuscode, $notify=true) {
-      global $OUTPUT, $CFG, $PAGE;
-      $return = '';
-      $statuscode = (int) $statuscode;
-
-      if (!empty($statuscode)) {
-        if($statuscode == 2){
-	//don't have any errors right now; could do something like $return = get_string('vericiteerror'.$statuscode, 'plagiarism_vericite');
-	}
-	if (!empty($return) && $notify) {
-            $return = $OUTPUT->notification($return, 'notifyproblem');
-        }
-      }
-      return $return;
     }
 
     /* hook to save plagiarism specific settings on a module settings page
@@ -461,11 +441,11 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     }
 }
 
-function vericite_get_scores($plagiarismsettings, $courseId, $cmid, $fileId, $userid){
+function plagiarism_vericite_get_scores($plagiarismsettings, $courseId, $cmid, $fileId, $userid){
 	global $DB;
 	$score = -1;
 	$c = new curl(array('proxy'=>true));
-	$url = vericite_generate_url($plagiarismsettings['vericite_api'], $courseId, $cmid);
+	$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $courseId, $cmid);
 	$fields = array();
 	$fields['consumer'] = $plagiarismsettings['vericite_accountid'];
 	$fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
@@ -519,13 +499,13 @@ function vericite_get_scores($plagiarismsettings, $courseId, $cmid, $fileId, $us
 }
 
 
-function endsWith($str, $test)
+function plagiarism_vericite_ends_with($str, $test)
 {
     return substr_compare($str, $test, -strlen($test), strlen($test)) === 0;
 }
 
-function vericite_generate_url($url, $context, $assignment=null, $user=null){
-     if(!endsWith($url, "/")){
+function plagiarism_vericite_generate_url($url, $context, $assignment=null, $user=null){
+     if(!plagiarism_vericite_ends_with($url, "/")){
             $url .= "/";
      }
      if(isset($context)){
@@ -540,7 +520,7 @@ function vericite_generate_url($url, $context, $assignment=null, $user=null){
     return $url;
 }
 
-function plagiarism_get_css_rank ($score) {
+function plagiarism_vericite_get_css_rank ($score) {
     $rank = "none";
     if ($score >  90) { $rank = "1"; }
     else if ($score >  80) { $rank = "2"; }
@@ -556,40 +536,3 @@ function plagiarism_get_css_rank ($score) {
     return "rank$rank";
 }
 
-function event_file_uploaded($eventdata) {
-    $result = true;
-        //a file has been uploaded - submit this to the plagiarism prevention service.
-
-    return $result;
-}
-function event_files_done($eventdata) {
-    $result = true;
-        //mainly used by assignment finalize - used if you want to handle "submit for marking" events
-        //a file has been uploaded/finalised - submit this to the plagiarism prevention service.
-
-    return $result;
-}
-
-function event_mod_created($eventdata) {
-    $result = true;
-        //a new module has been created - this is a generic event that is called for all module types
-        //make sure you check the type of module before handling if needed.
-
-    return $result;
-}
-
-function event_mod_updated($eventdata) {
-    $result = true;
-        //a module has been updated - this is a generic event that is called for all module types
-        //make sure you check the type of module before handling if needed.
-
-    return $result;
-}
-
-function event_mod_deleted($eventdata) {
-    $result = true;
-        //a module has been deleted - this is a generic event that is called for all module types
-        //make sure you check the type of module before handling if needed.
-
-    return $result;
-}
