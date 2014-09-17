@@ -257,52 +257,55 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					break;
 				}	
 			}	
-			$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
+			
 			if(!isset($token)){
 				//didn't find it in cache, get a new token
-				$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
 				$fields = array();
 				$fields['consumer'] = $plagiarismsettings['vericite_accountid'];
-	                	$fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
+	            $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
 				if(!$gradeassignment){
 					//non instructors can only see their own items
 					$fields['externalContentId'] = $fileId;
+					$fields['userRole'] = 'Learner';
+					//also make sure their token requires the context id, assignment id and user id
+					$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
 				}else{
 					//send over the param for role so that instructors can see more details:
-					$fields['userRole'] = 'Instructor';	
+					$fields['userRole'] = 'Instructor';
+					//instructors only need to pass in the site id since they can view anything in this site
+					$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
 				}
 				$fields['tokenRequest'] = 'true';
 				$c = new curl(array('proxy'=>true));
 	                        $status = json_decode($c->post($url, $fields));
-				if(!empty($status) && isset($status->token)){
+				if (! empty ( $status ) && isset ( $status->token )) {
 					$token = $status->token;
 					
-					//store token in db to use again:
-                       			$id = -1;
-					foreach($dbTokens as $dbToken){
-                               			if($dbToken->cm == $cmid && $dbToken->userid == $USER->id
-                                       			&& ($gradeassignment || $dbToken->identifier == $fileId)){
-                                      			//we found an existing score in the db, update it
-                                       			$id = $dbToken->id;
-                               			}
-						//this is a matched db item from the query above,
-						//so we should update the token id and time no matter what
+					// store token in db to use again:
+					$id = - 1;
+					foreach ( $dbTokens as $dbToken ) {
+						if ($dbToken->cm == $cmid && $dbToken->userid == $USER->id && ($gradeassignment || $dbToken->identifier == $fileId)) {
+							// we found an existing score in the db, update it
+							$id = $dbToken->id;
+						}
+						// this is a matched db item from the query above,
+						// so we should update the token id and time no matter what
 						$dbToken->token = $token;
-						$dbToken->timeretrieved = time();
-						$DB->update_record('plagiarism_vericite_tokens', $dbToken);
-                       			}
-	                        	if ($id < 0) { //token doesn't already exist, add it
-						$newelement = new object();
+						$dbToken->timeretrieved = time ();
+						$DB->update_record ( 'plagiarism_vericite_tokens', $dbToken );
+					}
+					if ($id < 0) { // token doesn't already exist, add it
+						$newelement = new object ();
 						$newelement->cm = $cmid;
-                                       		$newelement->userid = $USER->id;
-						if(!$gradeassignment){
-							//not an instructor, so make sure the token set the fileid
-                                       			$newelement->identifier = $fileId;
-                                       		}
-						$newelement->timeretrieved = time();
+						$newelement->userid = $USER->id;
+						if (! $gradeassignment) {
+							// not an instructor, so make sure the token set the fileid
+							$newelement->identifier = $fileId;
+						}
+						$newelement->timeretrieved = time ();
 						$newelement->token = $token;
-                               			$DB->insert_record('plagiarism_vericite_tokens', $newelement);
-                       			}
+						$DB->insert_record ( 'plagiarism_vericite_tokens', $newelement );
+					}
 				}
 			}
 			if(isset($token)){
@@ -314,7 +317,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				$fields['viewReport'] = 'true';
 				if($gradeassignment){
 					$fields['userRole'] = 'Instructor';
+				}else{
+					$fields['userRole'] = 'Learner';
 				}
+				
 				$urlParams = "";
 				foreach($fields as $key => $value){
 					if(!empty($urlParams)){
@@ -322,6 +328,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					}
 					$urlParams .= $key . "=" . rawurlencode($value);
 				}
+				//create a new url that passes in all the information for context, assignment and userId
+				$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
 				$results['reporturl'] = $url . "?" . $urlParams;
 			}
 		}
@@ -357,6 +365,25 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 }
 
             }
+            
+         //now save the assignment title and instructrions and files (not a big deal if this fails, so wrap in try catch)
+         try {
+	         $plagiarismsettings = $this->get_settings();
+	         if ($plagiarismsettings) {
+		         $fields = array();
+		         $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
+		         $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
+		         $fields['updateAssignmentDetails'] = 'true';
+		         $fields['assignmentTitle'] = $data->name;
+		         $fields['assignmentInstructions'] = $data->intro;
+		         $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $data->course, $data->coursemodule);
+		         
+		         	$c = new curl(array('proxy'=>true));
+		         	$status = json_decode($c->post($url, $fields));
+		         
+	         }
+         } catch (Exception $e) {
+         }
     }
 
     /**
