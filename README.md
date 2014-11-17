@@ -1,6 +1,6 @@
 README
 --------
-Contact support@longsight.com for access for a pilot.
+Contact vericite@longsight.com for access to a pilot.
 
 Installation guide: http://www.longsight.com/vericite/help/installation/moodle.html
 
