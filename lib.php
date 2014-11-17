@@ -67,6 +67,15 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
      */
     public function get_links($linkarray) {
 	global $COURSE;
+	
+	if (!empty($linkarray["file"])) {
+            $file = $linkarray["file"];
+            $filearea = $file->get_filearea();
+	    if ($filearea == "feedback_files" 
+		|| $filearea == "introattachment") {
+                return;
+            }
+        }
 	$vericite = array();
 	$vericite['courseId'] = $COURSE->id;
 	$vericite['courseTitle'] = $COURSE->fullname;
