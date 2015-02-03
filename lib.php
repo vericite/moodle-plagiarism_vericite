@@ -211,7 +211,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			$fields['userLastName'] = $user->lastname;
 			$fields['userEmail'] = $user->email;
 		}
-		$contentUserGradeAssignment = $gradeassignment = has_capability('mod/assign:grade', $modulecontext, $user);
+		$contentUserGradeAssignment = has_capability('mod/assign:grade', $modulecontext, $user->id);
 		$fields['userRole'] = $contentUserGradeAssignment ?  'Instructor' : 'Learner';
                 $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
                 $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
