@@ -142,6 +142,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     public function get_file_results($cmid, $userid, $file, $vericite=null) {
         global $DB, $USER, $COURSE, $OUTPUT, $CFG;
      	$SCORE_CACHE_MIN = 60;
+	$SCORE_FETCH_CACHE_MIN = 5;
 	$TOKEN_CACHE_MIN = 20;
         $plagiarismsettings = $this->get_settings();
         if (empty($plagiarismsettings)) {
@@ -201,9 +202,22 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			}
 		}
 	}
-	if($score < 0){
+	//check to see if we've already looked up the scores just recently:
+	$scoreCacheArray = $DB->get_records('plagiarism_vericite_score', array('cm'=>$cmid), '', 'id, cm, timeretrieved');
+	$scoreCache = array_shift($scoreCacheArray);
+	if($score < 0 && (empty($scoreCache) || $scoreCache->timeretrieved < time() - (60 * $SCORE_FETCH_CACHE_MIN))){
 		//ok, we couldn't find the score in the cache, try to look it up with the webservice
 		$score = $this->plagiarism_vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileId, $userid);
+		//update score DB table with the current fetch time
+		if(empty($scoreCache)){
+			$scorecacheelement = new object();
+			$scorecacheelement->cm = $cmid;
+			$scorecacheelement->timeretrieved = time();		
+			$DB->insert_record('plagiarism_vericite_score', $scorecacheelement);
+                }else{
+			$scoreCache->timeretrieved = time();
+                        $DB->update_record('plagiarism_vericite_score', $scoreCache);
+                }
 	}
 	if($score < 0 && (empty($myContent) || $myContent->status == $this->STATUS_SUCCESS)){
 		//ok can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded
@@ -396,7 +410,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                                 curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 				curl_setopt($c, CURLOPT_POSTFIELDS, $fields);
                                 $status = json_decode(curl_exec($c));
-		         
 	         }
          } catch (Exception $e) {
          }
@@ -575,7 +588,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($c, CURLOPT_POSTFIELDS, $fields);
         $scores = json_decode(curl_exec($c));
-
 	//store results in the cache and set $score if you find the appropriate file score
 	$apiScores = array();
 	if(!empty($scores)){
