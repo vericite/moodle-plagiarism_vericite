@@ -39,6 +39,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
      public $STATUS_SUCCESS=1;
      public $STATUS_LOCKED=2;
      public $STATUS_FAILED=3;
+     public $TOKEN_CACHE_MIN=20;
 
      public function get_settings() {
         static $plagiarismsettings;
@@ -143,7 +144,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         global $DB, $USER, $COURSE, $OUTPUT, $CFG;
      	$SCORE_CACHE_MIN = 60;
 	$SCORE_FETCH_CACHE_MIN = 5;
-	$TOKEN_CACHE_MIN = 20;
         $plagiarismsettings = $this->get_settings();
         if (empty($plagiarismsettings)) {
             // VeriCite is not enabled
@@ -275,7 +275,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			foreach($dbTokens as $dbToken){
 				//instructors can have multiple tokens, see if any of them aren't expired
 				//if it's not an instructor, there should only be one token in the array anyways
-				if(time() - (60 * $TOKEN_CACHE_MIN) < $dbToken->timeretrieved){
+				if(time() - (60 * $this->TOKEN_CACHE_MIN) < $dbToken->timeretrieved){
 					//we found an existing token, set token and break out
 					$token = $dbToken->token;
 					break;
@@ -495,14 +495,20 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     public function cron() {
 	global $CFG, $DB;
 
+	//Submit queued files:
 	$dbFiles = $DB->get_records('plagiarism_vericite_files', array('status'=>$this->STATUS_SEND), '', 'id, cm, userid, identifier, data, status, attempts');
-    	foreach($dbFiles as $dbFile){
+	if(!empty($dbFiles)){
+	  $fileIds = array();
+	  foreach($dbFiles as $dbFile){
     		//lock DB records that will be worked on
-		$dbFile->status=$this->STATUS_LOCKED;
-		$DB->update_record('plagiarism_vericite_files', $dbFile, true);
-	}
-	foreach($dbFiles as $dbFile){
-	   try{
+		array_push($fileIds, $dbFile->id);		
+	  }
+	  list($dsql, $dparam) = $DB->get_in_or_equal($fileIds);
+	  //TODO: Oracle 1000 in clause limit
+	  $DB->execute("update {plagiarism_vericite_files} set status = " . $this->STATUS_LOCKED . " where id " . $dsql, $dparam); 
+
+	  foreach($dbFiles as $dbFile){
+	    try{
 		$customdata = unserialize($dbFile->data);	
     		$plagiarismsettings = $customdata['plagiarismsettings'];
     		$user = $customdata['user'];
@@ -570,7 +576,12 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		}
 		$DB->update_record('plagiarism_vericite_files', $dbFile);
             }
+	  }
 	}
+
+	//Delete old tokens:
+	$DB->execute("delete from {plagiarism_vericite_tokens} where timeretrieved < " . (time() - (60 * $this->TOKEN_CACHE_MIN))); 
+
     }
 
 
