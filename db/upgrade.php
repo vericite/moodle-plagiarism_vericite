@@ -62,6 +62,11 @@ function xmldb_plagiarism_vericite_upgrade($oldversion) {
 	upgrade_plugin_savepoint(true, 2015021202, 'plagiarism', 'vericite');
     }
 
+    if($oldversion < 2015021300){
+	//Nothing to update
+	upgrade_plugin_savepoint(true, 2015021300, 'plagiarism', 'vericite');
+    }
+
     return true;
 }
 
