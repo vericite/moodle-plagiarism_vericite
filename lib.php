@@ -51,13 +51,13 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         if (isset($plagiarismsettings['vericite_use']) && $plagiarismsettings['vericite_use']) {
             // Now check to make sure required settings are set!
             if (empty($plagiarismsettings['vericite_api'])) {
-                error("VeriCite API URL not set!");
+                print_error("VeriCite API URL not set!");
             }
             if (empty($plagiarismsettings['vericite_accountid'])) {
-                error("VeriCite Account Id not set!");
+                print_error("VeriCite Account Id not set!");
 	    }
             if (empty($plagiarismsettings['vericite_secretkey'])) {
-                error("VeriCite Secret not set!");
+                print_error("VeriCite Secret not set!");
 	    }
             return $plagiarismsettings;
         } else {
@@ -90,12 +90,13 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	if(!empty($linkarray['assignment']) && !is_number($linkarray['assignment'])){
 		$vericite['assignmentTitle'] = $linkarray['assignment']->name;
 	}
+	$plagiarismsettings = $this->get_settings();
 	if (!empty($linkarray['content']) && trim($linkarray['content']) != false) {
             $file = array();
 	    $linkarray['content'] = '<html>' . $linkarray['content'] . '</html>';
             $file['filename'] = "InlineSubmission";
             $file['type'] = "inline";
-            $file['identifier'] = sha1($linkarray['content']);
+            $file['identifier'] = $this->plagiarism_vericite_identifier_prefix($plagiarismsettings['vericite_accountid'], $linkarray['cmid'], $linkarray['userid']) . sha1($linkarray['content']);
             $file['filepath'] = "";
 	    $file['userid'] = $linkarray['userid'];
 	    $file['size'] = 100;
@@ -105,7 +106,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	    $file = array();
             $file['filename'] = (!empty($linkarray['file']->filename)) ? $linkarray['file']->filename : $linkarray['file']->get_filename();
             $file['type'] = "file";
-	    $file['identifier'] = $linkarray['file']->get_pathnamehash();
+	    $file['identifier'] = $this->plagiarism_vericite_identifier_prefix($plagiarismsettings['vericite_accountid'], $linkarray['cmid'], $linkarray['userid']) . $linkarray['file']->get_pathnamehash();
             $file['filepath'] =  (!empty($linkarray['file']->filepath)) ? $linkarray['file']->filepath : $linkarray['file']->get_filepath();
 	    $file['userid'] = $linkarray['file']->get_userid();
 	    $file['size'] = $linkarray['file']->get_filesize();
@@ -150,7 +151,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             return false;
         }
         $plagiarismvalues = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$vericite['cmid']), '', 'name,value');
-        if (empty($plagiarismvalues['use_vericite'])) {
+	if (empty($plagiarismvalues['use_vericite'])) {
             // VeriCite not in use for this cm
             return false;
         }
@@ -214,13 +215,15 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			$scorecacheelement->cm = $cmid;
 			$scorecacheelement->timeretrieved = time();		
 			$DB->insert_record('plagiarism_vericite_score', $scorecacheelement);
-                }else{
+		}else{
 			$scoreCache->timeretrieved = time();
                         $DB->update_record('plagiarism_vericite_score', $scoreCache);
                 }
 	}
 	if($score < 0 && (empty($myContent) || $myContent->status == $this->STATUS_SUCCESS)){
 		//ok can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded
+		if($userid != $USER->id){
+		}
 		$user = ($userid == $USER->id ? $USER : $DB->get_record('user', array('id'=>$userid)));
 			
 		$customData = array(
@@ -410,7 +413,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                                 curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 				curl_setopt($c, CURLOPT_POSTFIELDS, $fields);
                                 $status = json_decode(curl_exec($c));
-	         }
+		}
          } catch (Exception $e) {
          }
     }
@@ -429,7 +432,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	$cmid = optional_param('update', 0, PARAM_INT);
         if (!empty($cmid)) {
             $plagiarismvalues = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$cmid), '', 'name,value');
-        }
+	}
         $plagiarismelements = $this->config_options();
 	//add form:
 	$mform->addElement('header', 'plagiarismdesc', get_string('pluginname', 'plagiarism_vericite'));
@@ -625,23 +628,46 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     	if(!empty($apiScores)){
 		//we found some scores, let's update the DB:
 		$dbScores = $DB->get_records('plagiarism_vericite_files', array('cm'=>$cmid), '', 'id, cm, userid, identifier, similarityscore, timeretrieved');
+		$sql = "INSERT INTO {plagiarism_vericite_files} (id, cm, userid, identifier, similarityscore, timeretrieved, data, status) VALUES ";
+		$executeQuery = false;
 		foreach($apiScores as $apiScore){
-			$id = -1;
 			foreach($dbScores as $dbScore){
 				if($dbScore->cm == $apiScore->cm && $dbScore->userid == $apiScore->userid 
 					&& $dbScore->identifier == $apiScore->identifier){
 					//we found an existing score in the db, update it
-					$id = $dbScore->id;
+					$apiScore->id = $dbScore->id;
 					break;
 				}
 			}
-			if ($id >= 0) { //update
-				$apiScore->id = $id;
-				$DB->update_record('plagiarism_vericite_files', $apiScore);
-			} else { //insert
-				$DB->insert_record('plagiarism_vericite_files', $apiScore);
+
+			if($executeQuery){
+				//add a comma since this isn't the first
+				$sql .= ",";
+			}else{
+				//we have at least one update
+				$executeQuery = true;
+			}
+
+			$id = (empty($apiScore->id)) ? "null" : $apiScore->id;
+			$sql .= "(". $id . "," .$apiScore->cm . "," .$apiScore->userid . ",'" .$apiScore->identifier . "'," .$apiScore->similarityscore . "," .$apiScore->timeretrieved . ",'" .$apiScore->data . "'," . $apiScore->status . ")";
+		}
+		if($executeQuery){
+			try{
+				//TODO: Create an Oracle version of this query
+				$sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), timeretrieved=VALUES(timeretrieved), status=VALUES(status)";
+				$DB->execute($sql);
+			}catch (Exception $e) {
+				//the fancy bulk update query didn't work, so fall back to one update at a time
+				foreach($apiScores as $apiScore){
+					if (!empty($apiScore->id)) { //update
+						$DB->update_record('plagiarism_vericite_files', $apiScore);
+				        } else { //insert
+		                                $DB->insert_record('plagiarism_vericite_files', $apiScore);
+					}
+				}
 			}
 		}
+
 	}
 
 	return $score;
@@ -684,6 +710,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     else if ($score >=  0) { $rank = "10"; }
 
     return "rank$rank";
+  }
+
+  function plagiarism_vericite_identifier_prefix($consumer, $cmid, $userid){
+	return $consumer . "_" . $cmid . "_" . $userid . "_";
   }
 }
 
