@@ -96,8 +96,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	    $linkarray['content'] = '<html>' . $linkarray['content'] . '</html>';
             $file['filename'] = "InlineSubmission";
             $file['type'] = "inline";
-            $file['identifier'] = $this->plagiarism_vericite_identifier_prefix($plagiarismsettings['vericite_accountid'], $linkarray['cmid'], $linkarray['userid']) . sha1($linkarray['content']);
-            $file['filepath'] = "";
+            $file['identifier'] = $this->plagiarism_vericite_identifier_prefix($plagiarismsettings['vericite_accountid'], $linkarray['cmid'], $linkarray['userid']) . "inline";
+	    $file['filepath'] = "";
 	    $file['userid'] = $linkarray['userid'];
 	    $file['size'] = 100;
 	    $file['content'] = $linkarray['content'];
@@ -192,7 +192,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	
 	$myContent = null;
 	$contentScore = $DB->get_records('plagiarism_vericite_files', array('cm'=>$vericite['cmid'], 'userid'=>$userid, 'identifier'=>$fileId), '', 'id,cm,userid,identifier,similarityscore, timeretrieved, status');
-	if(!empty($contentScore) && sizeof($contentScore) == 1){
+	if(!empty($contentScore)){
 		foreach($contentScore as $content){
 			$myContent = $content;
 			if($content->status == $this->STATUS_SUCCESS && time() - (60 * $SCORE_CACHE_MIN) < $content->timeretrieved){
@@ -201,6 +201,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				//from the API
 				$score = $content->similarityscore;
 			}
+			break;
 		}
 	}
 	//check to see if we've already looked up the scores just recently:
@@ -533,7 +534,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     		if(isset($vericite['assignmentTitle'])){
     			$fields['assignmentTitle'] = $vericite['assignmentTitle'];
     		}
-    		$fields['externalContentId'] = $vericite['file']['identifier'];
+    		$fields['externalContentId'] = $dbFile->identifier;
     		//create a tmp file to store data:
     		if (!check_dir_exists($customdata['dataroot']."/plagiarism/", true, true)) {
     			mkdir($customdata['dataroot']."/plagiarism/", 0700);
