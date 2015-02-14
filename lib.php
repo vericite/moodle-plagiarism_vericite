@@ -655,7 +655,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		if($executeQuery){
 			try{
 				//TODO: Create an Oracle version of this query
-				$sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), timeretrieved=VALUES(timeretrieved), status=VALUES(status)";
+				$sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), timeretrieved=VALUES(timeretrieved), status=VALUES(status), data=VALUE(data)";
 				$DB->execute($sql);
 			}catch (Exception $e) {
 				//the fancy bulk update query didn't work, so fall back to one update at a time
