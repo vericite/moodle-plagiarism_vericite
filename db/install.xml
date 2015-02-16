@@ -12,7 +12,7 @@
         <FIELD NAME="identifier" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="userid" NEXT="timeretrieved"/>
         <FIELD NAME="similarityscore" TYPE="int" LENGTH="5" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="statuscode" NEXT="attempt"/>
 	<FIELD NAME="timeretrieved" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="identifier" NEXT="data"/>
-        <FIELD NAME="data" TYPE="longtext" NOTNULL="false" SEQUENCE="false" PREVIOUS="timeretrieved" NEXT="status"/>
+        <FIELD NAME="data" TYPE="text" NOTNULL="false" SEQUENCE="false" PREVIOUS="timeretrieved" NEXT="status"/>
         <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" UNSIGNED="true" SEQUENCE="false" PREVIOUS="data" NEXT="attempts"/>
         <FIELD NAME="attempts" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" UNSIGNED="true" SEQUENCE="false" PREVIOUS="status"/>
       </FIELDS>

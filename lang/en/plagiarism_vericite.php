@@ -43,7 +43,9 @@ $string['defaultAssignment'] = 'This setting will be the default setting when cr
 $string['studentscorevericite_help'] = 'Select checkbox if you want to allow students to see their scores.';
 $string['studentreportvericite'] = 'Allow students to see reports';
 $string['studentreportvericite_help'] = 'Select checkbox if you want to allow students to see their reports.';
-
+$string['advanced_settings'] = 'Advanced Settings';
+$string['disable_dynamic_inline'] = 'Disable dynamic inline submissions';
+$string['disable_dynamic_inline_help'] = 'Inline submissions will only be submitted once and modifications will not be re-submitted.';
 
 
 

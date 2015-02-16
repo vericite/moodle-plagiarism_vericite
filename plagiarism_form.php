@@ -31,6 +31,11 @@ class plagiarism_setup_form extends moodleform {
         $mform->addRule('vericite_api', null, 'required', null, 'client');
 	$mform->setType('vericite_api', PARAM_URL);
 
+        $mform->addElement('html', get_string('advanced_settings', 'plagiarism_vericite') . "<br/>");
+        
+	$mform->addElement('checkbox', 'vericite_disable_dynamic_inline', get_string('disable_dynamic_inline', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_disable_dynamic_inline', 'disable_dynamic_inline', 'plagiarism_vericite');
+
         $mform->addElement('html', get_string('vericitedefaultsettings', 'plagiarism_vericite') . "<br/>");
 
         $mform->addElement('checkbox', 'vericite_use_default', get_string('usevericite', 'plagiarism_vericite'));
