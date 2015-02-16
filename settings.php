@@ -47,6 +47,9 @@ pl * plagiarism.php - allows the admin to configure plagiarism stuff
 	if (!isset($data->vericite_use)) {
             $data->vericite_use = 0;
         }
+	if (!isset($data->vericite_disable_dynamic_inline)) {
+            $data->vericite_disable_dynamic_inline = 0;
+        }
         if (!isset($data->vericite_use_default)) {
             $data->vericite_use_default = 0;
         }

@@ -96,7 +96,14 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	    $linkarray['content'] = '<html>' . $linkarray['content'] . '</html>';
             $file['filename'] = "InlineSubmission";
             $file['type'] = "inline";
-            $file['identifier'] = $this->plagiarism_vericite_identifier_prefix($plagiarismsettings['vericite_accountid'], $linkarray['cmid'], $linkarray['userid']) . "inline";
+	    $inlinePostfix = "";
+	    if(isset($plagiarismsettings['vericite_disable_dynamic_inline']) && $plagiarismsettings['vericite_disable_dynamic_inline']){
+		$inlinePostfix = "inline";
+	    }else{
+		$inlinePostfix = sha1($linkarray['content']);
+	    }
+
+            $file['identifier'] = $this->plagiarism_vericite_identifier_prefix($plagiarismsettings['vericite_accountid'], $linkarray['cmid'], $linkarray['userid']) . $inlinePostfix;
 	    $file['filepath'] = "";
 	    $file['userid'] = $linkarray['userid'];
 	    $file['size'] = 100;
