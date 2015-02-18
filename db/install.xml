@@ -47,8 +47,7 @@
         <KEY NAME="cm" TYPE="foreign" FIELDS="cm" REFTABLE="course_modules" REFFIELDS="id" PREVIOUS="primary" NEXT="userid"/>
       </KEYS>
     </TABLE>
-   </TABLES>
-   <TABLE NAME="plagiarism_vericite_score" COMMENT="info about last time score was looked" PREVIOUS="plagiarism_vericite_tokens">
+    <TABLE NAME="plagiarism_vericite_score" COMMENT="info about last time score was looked" PREVIOUS="plagiarism_vericite_tokens">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="cm"/>
         <FIELD NAME="cm" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="timeretrieved"/>
@@ -58,5 +57,6 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="cm"/>
         <KEY NAME="cm" TYPE="foreign" FIELDS="cm" REFTABLE="course_modules" REFFIELDS="id" PREVIOUS="primary" NEXT="userid"/>
       </KEYS>
-   </TABLE>
+    </TABLE>
+   </TABLES>
 </XMLDB>
