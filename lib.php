@@ -524,9 +524,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     		$plagiarismsettings = $customdata['plagiarismsettings'];
     		$user = $customdata['user'];
     		$vericite = $customdata['vericite'];
-    		$file = $customdata['file'];
-    		if(!empty($file)){
-			$file =  unserialize($file);
+    		if(!empty($customdata['file'])){
+			$file = get_file_storage();
+			$file =  unserialize($customdata['file']);
 		}
 		$url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $customdata['courseId'], $customdata['cmid'], $user->id);
 		$fields = array();    		
