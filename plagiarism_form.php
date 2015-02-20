@@ -35,6 +35,8 @@ class plagiarism_setup_form extends moodleform {
         
 	$mform->addElement('checkbox', 'vericite_disable_dynamic_inline', get_string('disable_dynamic_inline', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_disable_dynamic_inline', 'disable_dynamic_inline', 'plagiarism_vericite');
+	$mform->addElement('checkbox', 'vericite_enable_debugging', get_string('enable_debugging', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_enable_debugging', 'enable_debugging', 'plagiarism_vericite');
 
         $mform->addElement('html', get_string('vericitedefaultsettings', 'plagiarism_vericite') . "<br/>");
 

@@ -73,7 +73,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
      */
     public function get_links($linkarray) {
 	global $COURSE;
-
+	
 	if (!empty($linkarray["file"])) {
             $file = $linkarray["file"];
             $filearea = $file->get_filearea();
@@ -82,6 +82,12 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 return;
             }
         }
+	$plagiarismsettings = $this->get_settings();
+	if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		&& $plagiarismsettings['vericite_enable_debugging']){
+		error_log("VeriCite: get_links");
+		error_log(print_r($linkarray, true));
+	}	
 	$vericite = array();
 	$vericite['courseId'] = $COURSE->id;
 	$vericite['courseTitle'] = $COURSE->fullname;
@@ -90,7 +96,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	if(!empty($linkarray['assignment']) && !is_number($linkarray['assignment'])){
 		$vericite['assignmentTitle'] = $linkarray['assignment']->name;
 	}
-	$plagiarismsettings = $this->get_settings();
 	if (!empty($linkarray['content']) && trim($linkarray['content']) != false) {
             $file = array();
 	    $linkarray['content'] = '<html>' . $linkarray['content'] . '</html>';
@@ -120,7 +125,15 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	    $vericite['file'] = $file;
         }
 	if(!isset($file) || $file['userid'] !== $vericite['userid'] || $file['size'] > 52428800){
+		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+			error_log("VeriCite: file isn't set or user id is wrong or file size is too large");
+		}
 		return "";
+	}
+	if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		&& $plagiarismsettings['vericite_enable_debugging']){
+		error_log("VeriCite: vericite: " . print_r($vericite, true));
 	}
 	$output = '';
         //add link/information about this file to $output
@@ -157,8 +170,16 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             // VeriCite is not enabled
             return false;
         }
-        $plagiarismvalues = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$vericite['cmid']), '', 'name,value');
+	if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		&& $plagiarismsettings['vericite_enable_debugging']){
+        	error_log("VeriCite: get_file_results: cmid: " . $cmid . ", userId: " . $userid . ", file: " . print_r($file, true)); 
+	}
+	$plagiarismvalues = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$vericite['cmid']), '', 'name,value');
 	if (empty($plagiarismvalues['use_vericite'])) {
+	    if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+		error_log("VeriCite: not in use for this cm");
+	    }
             // VeriCite not in use for this cm
             return false;
         }
@@ -183,7 +204,11 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         }
 
         if (!$viewsimilarityscore && !$viewfullreport) {
-            // The user has no right to see the requested detail.
+	   if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		&& $plagiarismsettings['vericite_enable_debugging']){
+           	error_log("VeriCite: The user has no right to see the requested detail");
+	    }
+	    // The user has no right to see the requested detail.
             return false;
         }
 
@@ -202,18 +227,40 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	if(!empty($contentScore)){
 		foreach($contentScore as $content){
 			$myContent = $content;
+			if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+				&& $plagiarismsettings['vericite_enable_debugging']){
+				error_log("VeriCite: content: " . print_r($myContent, true));
+			}
 			if($content->status == $this->STATUS_SUCCESS && time() - (60 * $SCORE_CACHE_MIN) < $content->timeretrieved){
 				//since our reports are dynamic, only use the db as a cache
 				//if its too old of a results, don't set the score and just grab a new one
 				//from the API
 				$score = $content->similarityscore;
+				if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+					&& $plagiarismsettings['vericite_enable_debugging']){
+					error_log("VeriCite: content score: " . $score);
+				}
+			}else{
+				if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+					&& $plagiarismsettings['vericite_enable_debugging']){
+					error_log("VeriCite: content was too old: " . $content->timeretrieved);
+				}
 			}
 			break;
+		}
+	}else{
+		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+			error_log("VeriCite: no content scores in db");
 		}
 	}
 	//check to see if we've already looked up the scores just recently:
 	$scoreCacheArray = $DB->get_records('plagiarism_vericite_score', array('cm'=>$cmid), '', 'id, cm, timeretrieved');
 	$scoreCache = array_shift($scoreCacheArray);
+	if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		&& $plagiarismsettings['vericite_enable_debugging']){
+		error_log("VeriCite: score cache: " . print_r($scoreCache, true));
+	}
 	if($score < 0 && (empty($scoreCache) || $scoreCache->timeretrieved < time() - (60 * $SCORE_FETCH_CACHE_MIN))){
 		//ok, we couldn't find the score in the cache, try to look it up with the webservice
 		$score = $this->plagiarism_vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileId, $userid);
@@ -227,11 +274,22 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			$scoreCache->timeretrieved = time();
                         $DB->update_record('plagiarism_vericite_score', $scoreCache);
                 }
+		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+			error_log("VeriCite: looked up score in VeriCite: " . $score);
+		}
+	}else{
+		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+			error_log("VeriCite: Score lookup throttled, didn't look up score in VeriCite: score: " . $score . " ; now: " . time());
+		}
 	}
 	if($score < 0 && (empty($myContent) || $myContent->status == $this->STATUS_SUCCESS)){
-		//ok can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded
-		if($userid != $USER->id){
+		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+			error_log("VeriCite: can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded");
 		}
+		//ok can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded
 		$user = ($userid == $USER->id ? $USER : $DB->get_record('user', array('id'=>$userid)));
 			
 		$customData = array(
@@ -266,7 +324,13 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				$DB->insert_record('plagiarism_vericite_files', $newelement);
 			}
 		}catch (Exception $e) {
+			print_error($e->getMessage());
 	        }
+
+		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+			error_log("VeriCite: scheduled file to be uploaded: " . print_r($newelement, true));
+		}
 	}
 
 			
@@ -282,8 +346,16 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				//however, this isn't an instructor, so look it up by the fileid
 				$conditions['identifier'] = $fileId;
 			}
+			if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+				&& $plagiarismsettings['vericite_enable_debugging']){
+				error_log("VeriCite: looking for token: " . print_r($conditions, true));
+			}
 			$dbTokens = $DB->get_records('plagiarism_vericite_tokens', $conditions);
 			foreach($dbTokens as $dbToken){
+				if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+					&& $plagiarismsettings['vericite_enable_debugging']){
+					error_log("VeriCite: db token: " . print_r($dbToken, true));
+				}
 				//instructors can have multiple tokens, see if any of them aren't expired
 				//if it's not an instructor, there should only be one token in the array anyways
 				if(time() - (60 * $this->TOKEN_CACHE_MIN) < $dbToken->timeretrieved){
@@ -297,7 +369,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				//didn't find it in cache, get a new token
 				$fields = array();
 				$fields['consumer'] = $plagiarismsettings['vericite_accountid'];
-	            $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
+	            		$fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
 				if(!$gradeassignment){
 					//non instructors can only see their own items
 					$fields['externalContentId'] = $fileId;
@@ -311,11 +383,19 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					$url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
 				}
 				$fields['tokenRequest'] = 'true';
+				if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+					&& $plagiarismsettings['vericite_enable_debugging']){
+					error_log("VeriCite: requesting token: url: " . $url . " ; fields: " . print_r($fields, true));
+				}
 				$c = curl_init($url);
 				curl_setopt($c, CURLOPT_TIMEOUT, 10);
 				curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 				curl_setopt($c, CURLOPT_POSTFIELDS, $fields);
 				$status = json_decode(curl_exec($c));
+				if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+					&& $plagiarismsettings['vericite_enable_debugging']){
+					error_log("VeriCite: token response: " . print_r($status, true));
+				}
 				if (! empty ( $status ) && isset ( $status->token )) {
 					$token = $status->token;
 					
@@ -372,7 +452,15 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			}
 		}
 	}else{
+		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+			error_log("VeriCite: score wasn't found, returning nothing");
+		}
 		return false;
+	}
+	if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		&& $plagiarismsettings['vericite_enable_debugging']){
+		error_log("VeriCite: results: " . print_r($results, true));
 	}
         return $results;
     }
@@ -559,7 +647,13 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		}
     		fclose($fh);
     		$fields['fileName'] = $vericite['file']['filename'];
-    		if (class_exists('CURLFile')) {
+    		
+		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+			&& $plagiarismsettings['vericite_enable_debugging']){
+			error_log("VeriCite: cron submit: url: " . $url . " ; fields: " . print_r($fields, true));
+		}
+		
+		if (class_exists('CURLFile')) {
 			$fields['filedata'] = new CURLFile($filename);
     		}else{
 			$fields['filedata'] = '@' . $filename;
@@ -604,12 +698,19 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	$fields = array();
 	$fields['consumer'] = $plagiarismsettings['vericite_accountid'];
 	$fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
-	$fields['externalContentId'] = $fileId;
+	if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		&& $plagiarismsettings['vericite_enable_debugging']){
+		error_log("VeriCite: looking up scores in VeriCite: url: " . $url . " ; fields: " . print_r($fields, true));
+	}
 	$c = curl_init($url);
         curl_setopt($c, CURLOPT_TIMEOUT, 10);
 	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($c, CURLOPT_POSTFIELDS, $fields);
         $scores = json_decode(curl_exec($c));
+	if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		&& $plagiarismsettings['vericite_enable_debugging']){
+		error_log("VeriCite: score results: " . print_r($scores, true));
+	}
 	//store results in the cache and set $score if you find the appropriate file score
 	$apiScores = array();
 	if(!empty($scores)){
