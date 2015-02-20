@@ -46,6 +46,8 @@ $string['studentreportvericite_help'] = 'Select checkbox if you want to allow st
 $string['advanced_settings'] = 'Advanced Settings';
 $string['disable_dynamic_inline'] = 'Disable dynamic inline submissions';
 $string['disable_dynamic_inline_help'] = 'Inline submissions will only be submitted once and modifications will not be re-submitted.';
+$string['enable_debugging'] = 'Enable debugging';
+$string['enable_debugging_help'] = 'Turn debugging on for the VeriCite module. Errors will be printed to the php error log.';
 
 
 
