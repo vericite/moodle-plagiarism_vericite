@@ -387,11 +387,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					&& $plagiarismsettings['vericite_enable_debugging']){
 					error_log("VeriCite: requesting token: url: " . $url . " ; fields: " . print_r($fields, true));
 				}
-				$c = curl_init($url);
-				curl_setopt($c, CURLOPT_TIMEOUT, 10);
-				curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-				curl_setopt($c, CURLOPT_POSTFIELDS, $fields);
-				$status = json_decode(curl_exec($c));
+				$c = new curl(array('proxy'=>true));
+        			$status = json_decode($c->post($url, $fields));
 				if(!empty($plagiarismsettings['vericite_enable_debugging']) 
 					&& $plagiarismsettings['vericite_enable_debugging']){
 					error_log("VeriCite: token response: " . print_r($status, true));
@@ -503,12 +500,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		         $fields['assignmentTitle'] = $data->name;
 		         $fields['assignmentInstructions'] = $data->intro;
 		         $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $data->course, $data->coursemodule);
-		         
-				$c = curl_init($url);
-                                curl_setopt($c, CURLOPT_TIMEOUT, 10);
-                                curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-				curl_setopt($c, CURLOPT_POSTFIELDS, $fields);
-                                $status = json_decode(curl_exec($c));
+		         $c = new curl(array('proxy'=>true));
+		         $status = json_decode($c->post($url, $fields));
 		}
          } catch (Exception $e) {
          }
@@ -702,11 +695,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		&& $plagiarismsettings['vericite_enable_debugging']){
 		error_log("VeriCite: looking up scores in VeriCite: url: " . $url . " ; fields: " . print_r($fields, true));
 	}
-	$c = curl_init($url);
-        curl_setopt($c, CURLOPT_TIMEOUT, 10);
-	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($c, CURLOPT_POSTFIELDS, $fields);
-        $scores = json_decode(curl_exec($c));
+	$c = new curl(array('proxy'=>true));
+      	$scores = json_decode($c->post($url, $fields));
 	if(!empty($plagiarismsettings['vericite_enable_debugging']) 
 		&& $plagiarismsettings['vericite_enable_debugging']){
 		error_log("VeriCite: score results: " . print_r($scores, true));
