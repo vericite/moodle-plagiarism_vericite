@@ -301,7 +301,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					'vericite' => $vericite,
 					'file' => (!empty($file)) ? serialize($file) : "",
 					'dataroot' => $CFG->dataroot,
-					'contentUserGradeAssignment' => has_capability('mod/assign:grade', $modulecontext, $user->id)
+					'contentUserGradeAssignment' => has_capability('mod/assign:grade', $modulecontext, $userid)
 					);
 		//store for cron job to submit the file
 		$update = true;
@@ -314,7 +314,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		$newelement->cm = $cmid;
 		$newelement->timeretrieved = 0;
 		$newelement->identifier = $fileId;
-		$newelement->userid = $user->id;
+		$newelement->userid = $userid;
 		$newelement->data = serialize($customData);
 		$newelement->status = $this->STATUS_SEND;
 		try{
