@@ -328,7 +328,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			error_log("VeriCite: newelement: " . print_r($newelement, true));
 	        	error_log("VeriCite: user: " . print_r($user, true));
 		}
-		error_log("user: " . print_r($user, true));
 		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
 			&& $plagiarismsettings['vericite_enable_debugging']){
 			error_log("VeriCite: scheduled file to be uploaded: " . print_r($newelement, true));
