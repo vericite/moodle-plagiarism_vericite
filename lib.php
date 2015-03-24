@@ -291,7 +291,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		}
 		//ok can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded
 		$user = ($userid == $USER->id ? $USER : $DB->get_record('user', array('id'=>$userid)));
-			
+
 		$customData = array(
 					'plagiarismsettings' => $plagiarismsettings,
 					'courseId' => $COURSE->id,
@@ -324,9 +324,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				$DB->insert_record('plagiarism_vericite_files', $newelement);
 			}
 		}catch (Exception $e) {
-			print_error($e->getMessage());
-	        }
-
+			error_log($e->getMessage());
+			error_log("VeriCite: newelement: " . print_r($newelement, true));
+	        	error_log("VeriCite: user: " . print_r($user, true));
+		}
 		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
 			&& $plagiarismsettings['vericite_enable_debugging']){
 			error_log("VeriCite: scheduled file to be uploaded: " . print_r($newelement, true));
