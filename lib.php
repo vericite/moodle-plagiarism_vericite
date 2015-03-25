@@ -124,7 +124,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	    $file['size'] = $linkarray['file']->get_filesize();
 	    $vericite['file'] = $file;
         }
-	if(!isset($file) || $file['userid'] !== $vericite['userid'] || $file['size'] > 52428800){
+	if(empty($vericite['userid']) || !isset($file) 
+		|| $file['userid'] !== $vericite['userid'] || $file['size'] > 52428800){
 		if(!empty($plagiarismsettings['vericite_enable_debugging']) 
 			&& $plagiarismsettings['vericite_enable_debugging']){
 			error_log("VeriCite: file isn't set or user id is wrong or file size is too large");
