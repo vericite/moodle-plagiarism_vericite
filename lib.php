@@ -294,11 +294,12 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		$user = ($userid == $USER->id ? $USER : $DB->get_record('user', array('id'=>$userid)));
 
 		$customData = array(
-					'plagiarismsettings' => $plagiarismsettings,
 					'courseId' => $COURSE->id,
 					'cmid' => $cmid,
-					'user' => $user,
-					'modulecontext' => $modulecontext,
+					'userid' => $user->id,
+					'userEmail' => $user->email,
+					'userFirstName' => $user->firstname,
+					'userLastName' => $user->lastname,
 					'vericite' => $vericite,
 					'file' => (!empty($file)) ? serialize($file) : "",
 					'dataroot' => $CFG->dataroot,
@@ -316,7 +317,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		$newelement->timeretrieved = 0;
 		$newelement->identifier = $fileId;
 		$newelement->userid = $userid;
-		$newelement->data = serialize($customData);
+		$newelement->data = base64_encode(serialize($customData));
 		$newelement->status = $this->STATUS_SEND;
 		try{
 			if($update){
@@ -589,6 +590,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     public function cron() {
 	global $CFG, $DB;
 
+	$plagiarismsettings = $this->get_settings();
+
 	//Submit queued files:
 	$dbFiles = $DB->get_records('plagiarism_vericite_files', array('status'=>$this->STATUS_SEND), '', 'id, cm, userid, identifier, data, status, attempts');
 	if(!empty($dbFiles)){
@@ -603,20 +606,23 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
 	  foreach($dbFiles as $dbFile){
 	    try{
-		$customdata = unserialize($dbFile->data);	
-    		$plagiarismsettings = $customdata['plagiarismsettings'];
-    		$user = $customdata['user'];
+		$customdata = unserialize(base64_decode($dbFile->data));	
+		$userid = $customdata['userid'];
     		$vericite = $customdata['vericite'];
-    		if(!empty($customdata['file'])){
-			$file = get_file_storage();
-			$file =  unserialize($customdata['file']);
-		}
-		$url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $customdata['courseId'], $customdata['cmid'], $user->id);
+		if(!empty($customdata['file'])){
+                       $file = get_file_storage();
+                       $file = unserialize($customdata['file']);
+                }
+		$url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $customdata['courseId'], $customdata['cmid'], $userid);
 		$fields = array();    		
-    		if(isset($user)){
-    			$fields['userFirstName'] = $user->firstname;
-    			$fields['userLastName'] = $user->lastname;
-    			$fields['userEmail'] = $user->email;
+    		if(!empty($customdata['userFirstName'])){
+    			$fields['userFirstName'] = $customdata['userFirstName'];
+    		}
+    		if(!empty($customdata['userLastName'])){
+    			$fields['userLastName'] = $customdata['userLastName'];
+    		}
+    		if(!empty($customdata['userEmail'])){
+    			$fields['userEmail'] = $customdata['userEmail'];
     		}
     		$fields['userRole'] = $customdata['contentUserGradeAssignment'] ?  'Instructor' : 'Learner';
     		$fields['consumer'] = $plagiarismsettings['vericite_accountid'];
@@ -633,10 +639,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     		$fh = fopen($filename, 'w');
 		if (!empty($vericite['file']['type']) && $vericite['file']['type'] == "file"){
 			if(!empty($file->filepath)){
-				fwrite($fh, file_get_contents($file->filepath));
-			}else{
-				fwrite($fh, $file->get_content());
-			}
+                               fwrite($fh, file_get_contents($file->filepath));
+                        }else{
+                               fwrite($fh, $file->get_content());
+                        }
 		}else{
 			fwrite($fh, $vericite['file']['content']);
 		}
@@ -667,6 +673,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		$dbFile->data = "";
     		$DB->update_record('plagiarism_vericite_files', $dbFile);
 	    }catch(Exception $e){
+		error_log("VeriCite Cron Error: " . $e->getMessage());
+		error_log(print_r($e,true));
 		//something happened, unlock this to try again later
 		if($dbFile->attempts < 500){
 			$dbFile->status=$this->STATUS_SEND;
