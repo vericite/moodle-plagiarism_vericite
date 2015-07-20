@@ -663,6 +663,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		$status = json_decode($c->post($url, $fields));
 		if(!empty($status) && isset($status->result) && strcmp("success", $status->result) == 0){
 			//success: do nothing
+			if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+				&& $plagiarismsettings['vericite_enable_debugging']){
+				error_log("VeriCite: cron submit success.");
+			}
 		}else{
 			//error of some sort, do not save
 			throw new Exception('failed to send file to VeriCite');
