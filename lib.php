@@ -676,6 +676,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	    	$dbFile->status=$this->STATUS_SUCCESS;
 		$dbFile->data = "";
     		$DB->update_record('plagiarism_vericite_files', $dbFile);
+		//clear cache scores so that the score will be looked up immediately
+		$DB->execute("delete from {plagiarism_vericite_score} where cm = " . $dbFile->cm);
 	    }catch(Exception $e){
 		error_log("VeriCite Cron Error: " . $e->getMessage());
 		error_log(print_r($e,true));
