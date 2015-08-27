@@ -62,6 +62,12 @@ pl * plagiarism.php - allows the admin to configure plagiarism stuff
         if (!isset($data->vericite_student_report_default)) {
             $data->vericite_student_report_default = 0;
         }
+        if (!isset($data->vericite_student_score_default_forums)) {
+            $data->vericite_student_score_default_forums = 0;
+        }
+        if (!isset($data->vericite_student_report_default_forums)) {
+            $data->vericite_student_report_default_forums = 0;
+        }
         //save each setting
 	foreach ($data as $field=>$value) {
             if (strpos($field, 'vericite')===0) {

@@ -36,6 +36,7 @@ $string['vericiteapi'] = 'API URL';
 $string['vericiteapi_help'] = 'This is the API url given to you from Longsight';
 $string['similarity'] = 'Similarity';
 $string['vericitedefaultsettings'] = 'Default settings for new assignments:';
+$string['vericitedefaultsettingsforums'] = 'Default settings for new forums:';
 $string['usevericite_help'] = 'This setting will be the default setting when creating a new assignment.  Select checkbox if you want new assignments to use VeriCite by default.';
 $string['usevericite'] = 'Use VeriCite Plagiarism Service';
 $string['studentscorevericite'] = 'Allow students to see scores';
