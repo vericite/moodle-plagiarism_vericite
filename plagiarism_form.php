@@ -49,6 +49,14 @@ class plagiarism_setup_form extends moodleform {
         $mform->addElement('checkbox', 'vericite_student_report_default', get_string('studentreportvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_student_report_default', 'studentreportvericite', 'plagiarism_vericite');
 	
+        $mform->addElement('html', get_string('vericitedefaultsettingsforums', 'plagiarism_vericite') . "<br/>");
+
+        $mform->addElement('checkbox', 'vericite_student_score_default_forums', get_string('studentscorevericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_student_score_default_forums', 'studentscorevericite', 'plagiarism_vericite');
+	
+        $mform->addElement('checkbox', 'vericite_student_report_default_forums', get_string('studentreportvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_student_report_default_forums', 'studentreportvericite', 'plagiarism_vericite');
+	
 	$this->add_action_buttons(true);
     }
 }

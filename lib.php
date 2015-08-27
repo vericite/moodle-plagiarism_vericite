@@ -532,7 +532,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	$mform->addElement('checkbox', 'use_vericite', get_string("usevericite", "plagiarism_vericite"));
 	if(isset($plagiarismvalues['use_vericite'])){
 		$mform->setDefault('use_vericite', $plagiarismvalues['use_vericite']);
-	}else if(isset($plagiarismsettings['vericite_use_default'])){
+	}else if(strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_use_default'])){
 		$mform->setDefault('use_vericite', $plagiarismsettings['vericite_use_default']);
 	}
 	$mform->addElement('checkbox', 'plagiarism_show_student_score', get_string("studentscorevericite", "plagiarism_vericite"));
@@ -540,16 +540,20 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	$mform->disabledIf('plagiarism_show_student_score', 'use_vericite');
 	if(isset($plagiarismvalues['plagiarism_show_student_score'])){
                 $mform->setDefault('plagiarism_show_student_score', $plagiarismvalues['plagiarism_show_student_score']);
-        }else if(isset($plagiarismsettings['vericite_student_score_default'])){
+        }else if(strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_student_score_default'])){
                 $mform->setDefault('plagiarism_show_student_score', $plagiarismsettings['vericite_student_score_default']);
-        }
+        }else if(strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_student_score_default_forums'])){
+                $mform->setDefault('plagiarism_show_student_score', $plagiarismsettings['vericite_student_score_default_forums']);
+	}
 	$mform->addElement('checkbox', 'plagiarism_show_student_report', get_string("studentreportvericite", "plagiarism_vericite"));
 	$mform->addHelpButton('plagiarism_show_student_report', 'studentreportvericite', 'plagiarism_vericite');
 	$mform->disabledIf('plagiarism_show_student_report', 'use_vericite');
 	if(isset($plagiarismvalues['plagiarism_show_student_report'])){
                 $mform->setDefault('plagiarism_show_student_report', $plagiarismvalues['plagiarism_show_student_report']);
-        }else if(isset($plagiarismsettings['vericite_student_score_default'])){
+        }else if(strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_student_score_default'])){
                 $mform->setDefault('plagiarism_show_student_report', $plagiarismsettings['vericite_student_report_default']);
+        }else if(strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_student_score_default_forums'])){
+                $mform->setDefault('plagiarism_show_student_report', $plagiarismsettings['vericite_student_report_default_forums']);
         }
     }
 
