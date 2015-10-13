@@ -567,14 +567,20 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
      * @return string
      */
     public function print_disclosure($cmid) {
-        global $OUTPUT;
-        $plagiarismsettings = (array)get_config('plagiarism');
-        //TODO: check if this cmid has plagiarism enabled.
-        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-        $formatoptions = new stdClass;
-        $formatoptions->noclean = true;
-        echo format_text($plagiarismsettings['vericite_student_disclosure'], FORMAT_MOODLE, $formatoptions);
-        echo $OUTPUT->box_end();
+	global $OUTPUT,$DB;
+        $output = '';
+	if (!empty($cmid)) {
+		$plagiarismsettings = (array)get_config('plagiarism');
+		$disclosure = $plagiarismsettings['vericite_student_disclosure'];
+		if(!empty($disclosure)){
+        		$plagiarismvalues = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$cmid), '', 'name,value');
+			if(!empty($plagiarismvalues) && $plagiarismvalues['use_vericite']){
+				$contents = format_text($disclosure, FORMAT_MOODLE, array("noclean" => true));
+				$output = $OUTPUT->box($contents, 'generalbox boxaligncenter', 'intro');
+			}
+		}
+	}
+	return $output;
     }
 
     /**
@@ -673,7 +679,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 			}
 		}else{
 			//error of some sort, do not save
-			throw new Exception('failed to send file to VeriCite');
+			throw new Exception('failed to send file to VeriCite: ' . $status);
 		} 
 		unlink($filename);
 		//now update the record to show we have retreived it

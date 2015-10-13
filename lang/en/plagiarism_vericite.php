@@ -21,7 +21,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['pluginname'] = 'VeriCite';
-$string['studentdisclosuredefault']  ='All files uploaded will be submitted to VeriCite, a plagiarism detection service';
+$string['studentdisclosuredefault']  ='All text and files uploaded will be submitted to VeriCite, a plagiarism detection service';
 $string['studentdisclosure'] = 'Student Disclosure';
 $string['studentdisclosure_help'] = '';
 $string['vericiteexplain'] = 'For more information on this plugin see: ';
