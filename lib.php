@@ -477,6 +477,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $plagiarismelements = $this->config_options();
 	    //array of posible plagiarism config options.
             //first get existing values
+		if (!isset($data->use_vericite)) {
+			$data->use_vericite = 0;
+		}
+		
 	    $existingelements = $DB->get_records_menu('plagiarism_vericite_config', array('cm'=>$data->coursemodule), '', 'name,id');
 	    foreach ($plagiarismelements as $element) {
                 $newelement = new object();
@@ -495,16 +499,21 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
          //now save the assignment title and instructrions and files (not a big deal if this fails, so wrap in try catch)
          try {
 	         $plagiarismsettings = $this->get_settings();
-	         if ($plagiarismsettings) {
+	         if ($plagiarismsettings && !empty($data->use_vericite)) {
 		         $fields = array();
 		         $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
 		         $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
 		         $fields['updateAssignmentDetails'] = 'true';
 		         $fields['assignmentTitle'] = $data->name;
 		         $fields['assignmentInstructions'] = $data->intro;
+				 $fields['assignmentExcludeQuotes'] = !empty($data->plagiarism_exclude_quotes) ? "true" : "false";
 		         $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $data->course, $data->coursemodule);
 		         $c = new curl(array('proxy'=>true));
 		         $status = json_decode($c->post($url, $fields));
+		 		 if(!empty($plagiarismsettings['vericite_enable_debugging']) 
+		 			&& $plagiarismsettings['vericite_enable_debugging']){
+				 	error_log("VeriCite: cron submit: url: " . $url . " ; fields: " . print_r($fields, true));
+				 }
 		}
          } catch (Exception $e) {
          }
@@ -538,7 +547,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	$mform->addElement('checkbox', 'plagiarism_show_student_score', get_string("studentscorevericite", "plagiarism_vericite"));
 	$mform->addHelpButton('plagiarism_show_student_score', 'studentscorevericite', 'plagiarism_vericite');
 	$mform->disabledIf('plagiarism_show_student_score', 'use_vericite');
-	if(isset($plagiarismvalues['plagiarism_show_student_score'])){
+	$mform->setDefault('plagiarism_show_student_score', true);
+	//only show DB saved setting if use_vericite is enabled, otherwise, only show defaults
+	if(!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_show_student_score'])){
                 $mform->setDefault('plagiarism_show_student_score', $plagiarismvalues['plagiarism_show_student_score']);
         }else if(strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_student_score_default'])){
                 $mform->setDefault('plagiarism_show_student_score', $plagiarismsettings['vericite_student_score_default']);
@@ -548,17 +559,32 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 	$mform->addElement('checkbox', 'plagiarism_show_student_report', get_string("studentreportvericite", "plagiarism_vericite"));
 	$mform->addHelpButton('plagiarism_show_student_report', 'studentreportvericite', 'plagiarism_vericite');
 	$mform->disabledIf('plagiarism_show_student_report', 'use_vericite');
-	if(isset($plagiarismvalues['plagiarism_show_student_report'])){
+	$mform->setDefault('plagiarism_show_student_report', true);
+	//only show DB saved setting if use_vericite is enabled, otherwise, only show defaults
+	if(!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_show_student_report'])){
                 $mform->setDefault('plagiarism_show_student_report', $plagiarismvalues['plagiarism_show_student_report']);
         }else if(strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_student_score_default'])){
                 $mform->setDefault('plagiarism_show_student_report', $plagiarismsettings['vericite_student_report_default']);
         }else if(strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_student_score_default_forums'])){
                 $mform->setDefault('plagiarism_show_student_report', $plagiarismsettings['vericite_student_report_default_forums']);
         }
+		
+		$mform->addElement('checkbox', 'plagiarism_exclude_quotes', get_string("excludequotesvericite", "plagiarism_vericite"));
+		$mform->addHelpButton('plagiarism_exclude_quotes', 'excludequotesvericite', 'plagiarism_vericite');
+		$mform->disabledIf('plagiarism_exclude_quotes', 'use_vericite');
+		$mform->setDefault('vericite_student_score_default', true);
+		//only show DB saved setting if use_vericite is enabled, otherwise, only show defaults
+		if(!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_exclude_quotes'])){
+			$mform->setDefault('plagiarism_exclude_quotes', $plagiarismvalues['plagiarism_exclude_quotes']);
+		}else if(strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_exclude_quotes_default'])){
+			$mform->setDefault('plagiarism_exclude_quotes', $plagiarismsettings['vericite_exclude_quotes_default']);
+		}else if(strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_exclude_quotes_default_forums'])){
+			$mform->setDefault('plagiarism_exclude_quotes', $plagiarismsettings['vericite_exclude_quotes_default_forums']);
+		}
     }
 
     public function config_options() {
-        return array('use_vericite', 'plagiarism_show_student_score', 'plagiarism_show_student_report');
+        return array('use_vericite', 'plagiarism_show_student_score', 'plagiarism_show_student_report', 'plagiarism_exclude_quotes');
     }
 
     /**
