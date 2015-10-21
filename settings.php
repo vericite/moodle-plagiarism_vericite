@@ -14,14 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
-pl * plagiarism.php - allows the admin to configure plagiarism stuff
- *
- * @package   plagiarism_turnitin
- * @author    Dan Marsden <dan@danmarsden.com>
- * @copyright 1999 onwards Martin Dougiamas  {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+
     require_once(dirname(dirname(__FILE__)) . '/../config.php');
     require_once($CFG->libdir.'/adminlib.php');
     require_once($CFG->libdir.'/plagiarismlib.php');
@@ -62,12 +55,19 @@ pl * plagiarism.php - allows the admin to configure plagiarism stuff
         if (!isset($data->vericite_student_report_default)) {
             $data->vericite_student_report_default = 0;
         }
+        if (!isset($data->vericite_exclude_quotes_default)) {
+            $data->vericite_exclude_quotes_default = 0;
+        }
         if (!isset($data->vericite_student_score_default_forums)) {
             $data->vericite_student_score_default_forums = 0;
         }
         if (!isset($data->vericite_student_report_default_forums)) {
             $data->vericite_student_report_default_forums = 0;
         }
+        if (!isset($data->vericite_exclude_quotes_default_forums)) {
+            $data->vericite_exclude_quotes_default_forums = 0;
+        }
+ 
         //save each setting
 	foreach ($data as $field=>$value) {
             if (strpos($field, 'vericite')===0) {

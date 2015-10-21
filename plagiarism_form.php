@@ -45,17 +45,29 @@ class plagiarism_setup_form extends moodleform {
         
         $mform->addElement('checkbox', 'vericite_student_score_default', get_string('studentscorevericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_student_score_default', 'studentscorevericite', 'plagiarism_vericite');
-	
+		$mform->setDefault('vericite_student_score_default', true);
+			
         $mform->addElement('checkbox', 'vericite_student_report_default', get_string('studentreportvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_student_report_default', 'studentreportvericite', 'plagiarism_vericite');
+		$mform->setDefault('vericite_student_report_default', true);
+				
+        $mform->addElement('checkbox', 'vericite_exclude_quotes_default', get_string('excludequotesvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_exclude_quotes_default', 'excludequotesvericite', 'plagiarism_vericite');
+		$mform->setDefault('vericite_exclude_quotes_default', true);
 	
         $mform->addElement('html', get_string('vericitedefaultsettingsforums', 'plagiarism_vericite') . "<br/>");
 
         $mform->addElement('checkbox', 'vericite_student_score_default_forums', get_string('studentscorevericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_student_score_default_forums', 'studentscorevericite', 'plagiarism_vericite');
-	
+		$mform->setDefault('vericite_student_score_default_forums', true);
+			
         $mform->addElement('checkbox', 'vericite_student_report_default_forums', get_string('studentreportvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_student_report_default_forums', 'studentreportvericite', 'plagiarism_vericite');
+		$mform->setDefault('vericite_student_report_default_forums', true);
+		
+        $mform->addElement('checkbox', 'vericite_exclude_quotes_default_forums', get_string('excludequotesvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_exclude_quotes_default_forums', 'excludequotesvericite', 'plagiarism_vericite');
+		$mform->setDefault('vericite_exclude_quotes_default_forums', true);
 	
 	$this->add_action_buttons(true);
     }

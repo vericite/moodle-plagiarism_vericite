@@ -49,6 +49,7 @@ $string['disable_dynamic_inline'] = 'Disable dynamic inline submissions';
 $string['disable_dynamic_inline_help'] = 'Inline submissions will only be submitted once and modifications will not be re-submitted.';
 $string['enable_debugging'] = 'Enable debugging';
 $string['enable_debugging_help'] = 'Turn debugging on for the VeriCite module. Errors will be printed to the php error log.';
-
+$string['excludequotesvericite'] = 'Exclude Quotes';
+$string['excludequotesvericite_help'] = 'The default for all reports for an assignment. To lower the number of false positives, we recommend setting quotes to be excluded as the default. You will be able to toggle between excluding and including quotes inside each report.';
 
 
