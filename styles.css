@@ -1,3 +1,9 @@
+/**
+ * File styles.css.
+ * Contains vendor-prefixed declarations for the VeriCite plagiarism 
+ * detection service.
+ */
+
 .vericite-report .vericite-rank-10,
 .vericite-report .vericite-rank-9,
 .vericite-report .vericite-rank-8,
@@ -8,47 +14,47 @@
 .vericite-report .vericite-rank-3,
 .vericite-report .vericite-rank-2,
 .vericite-report .vericite-rank-1 {
-       color: #FFFFFF;
-       font-weight: bold;
-       padding: 2px;
+    color: #fff;
+    font-weight: bold;
+    padding: 0.2em;
 }
 
 .vericite-report .vericite-rank-1 {
-       background-color: #CF0000;
+    background-color: #cf0000;
 }
 
 .vericite-report .vericite-rank-2 {
-       background-color: #F15A24;
+    background-color: #f15a24;
 }
 
 .vericite-report .vericite-rank-3 {
-       background-color: #F7931E;
+    background-color: #f7931e;
 }
 
 .vericite-report .vericite-rank-4 {
-       background-color: #FBB03B;
+    background-color: #fbb03b;
 }
 
 .vericite-report .vericite-rank-5 {
-       background-color: #FFE313;
+    background-color: #ffe313;
 }
 
 .vericite-report .vericite-rank-6 {
-       background-color: #D9E021;
+    background-color: #d9e021;
 }
 
 .vericite-report .vericite-rank-7 {
-       background-color: #8CC63F;
+    background-color: #8cc63f;
 }
 
 .vericite-report .vericite-rank-8 {
-       background-color: #22B573;
+    background-color: #22b573;
 }
 
 .vericite-report .vericite-rank-9 {
-       background-color: #00AEE3;
+    background-color: #00aee3;
 }
 
 .vericite-report .vericite-rank-10 {
-       background-color: #196DD2;
+    background-color: #196dd2;
 }
