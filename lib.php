@@ -825,18 +825,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     }
 
     function plagiarism_vericite_get_css_rank ($score) {
-        $rank = 'none';
-        if ($score >  90) { $rank = '1'; }
-        else if ($score >  80) { $rank = '2'; }
-        else if ($score >  70) { $rank = '3'; }
-        else if ($score >  60) { $rank = '4'; }
-        else if ($score >  50) { $rank = '5'; }
-        else if ($score >  40) { $rank = '6'; }
-        else if ($score >  30) { $rank = '7'; }
-        else if ($score >  20) { $rank = '8'; }
-        else if ($score >  10) { $rank = '9'; }
-        else if ($score >=  0) { $rank = '10'; }
-
+        $rank = ceil((100 - (int)$score) / 10);
         return 'vericite-rank-' . $rank;
     }
 
