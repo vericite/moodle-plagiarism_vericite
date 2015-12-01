@@ -152,11 +152,11 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         $similaritystring = '&nbsp;<span class="' . $rank . '">' . $results['score'] . '%</span>';
         if (!empty($results['reporturl'])) {
             // User gets to see link to similarity report & similarity score
-            $output = '<span class="plagiarismreport"><a href="' . $results['reporturl'] . '" target="_blank">';
+            $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
             $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
         } else {
             // User only sees similarity score
-            $output = '<span class="plagiarismreport">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
+            $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
         }
         return "<br/>" . $output . "<br/>";
     }
@@ -848,19 +848,19 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
   }
 
   function plagiarism_vericite_get_css_rank ($score) {
-    $rank = "none";
-    if ($score >  90) { $rank = "1"; }
-    else if ($score >  80) { $rank = "2"; }
-    else if ($score >  70) { $rank = "3"; }
-    else if ($score >  60) { $rank = "4"; }
-    else if ($score >  50) { $rank = "5"; }
-    else if ($score >  40) { $rank = "6"; }
-    else if ($score >  30) { $rank = "7"; }
-    else if ($score >  20) { $rank = "8"; }
-    else if ($score >  10) { $rank = "9"; }
-    else if ($score >=  0) { $rank = "10"; }
+    $rank = 'none';
+    if ($score >  90) { $rank = '1'; }
+    else if ($score >  80) { $rank = '2'; }
+    else if ($score >  70) { $rank = '3'; }
+    else if ($score >  60) { $rank = '4'; }
+    else if ($score >  50) { $rank = '5'; }
+    else if ($score >  40) { $rank = '6'; }
+    else if ($score >  30) { $rank = '7'; }
+    else if ($score >  20) { $rank = '8'; }
+    else if ($score >  10) { $rank = '9'; }
+    else if ($score >=  0) { $rank = '10'; }
 
-    return "rank$rank";
+    return 'vericite-rank-' . $rank;
   }
 
   function plagiarism_vericite_identifier_prefix($consumer, $cmid, $userid){
