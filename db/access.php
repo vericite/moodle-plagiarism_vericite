@@ -1,4 +1,3 @@
 <?php
 
-$capabilities = array(
-);
+$capabilities = array();

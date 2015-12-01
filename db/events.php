@@ -1,5 +1,3 @@
 <?php
 
-$handlers = array (
-
-);
+$handlers = array ();

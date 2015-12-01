@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -21,12 +22,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['pluginname'] = 'VeriCite';
-$string['studentdisclosuredefault']  ='All text and files uploaded will be submitted to VeriCite, a plagiarism detection service';
+$string['studentdisclosuredefault']  = 'All text and files uploaded will be submitted to VeriCite, a plagiarism detection service';
 $string['studentdisclosure'] = 'Student Disclosure';
 $string['studentdisclosure_help'] = '';
 $string['vericiteexplain'] = 'For more information on this plugin see: ';
 $string['vericite'] = 'VeriCite plagiarism plugin';
-$string['usevericite'] ='Enable VeriCite';
+$string['usevericite'] = 'Enable VeriCite';
 $string['savedconfigsuccess'] = 'Plagiarism Settings Saved';
 $string['vericiteaccountid'] = 'Account Id';
 $string['vericiteaccountid_help'] = 'This is the id given to you from Longsight';
@@ -51,5 +52,3 @@ $string['enable_debugging'] = 'Enable debugging';
 $string['enable_debugging_help'] = 'Turn debugging on for the VeriCite module. Errors will be printed to the php error log.';
 $string['excludequotesvericite'] = 'Exclude Quotes';
 $string['excludequotesvericite_help'] = 'The default for all reports for an assignment. To lower the number of false positives, we recommend setting quotes to be excluded as the default. You will be able to toggle between excluding and including quotes inside each report.';
-
-
