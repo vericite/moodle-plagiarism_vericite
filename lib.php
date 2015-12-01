@@ -422,16 +422,16 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         $fields['userRole'] = 'Learner';
                     }
 
-                    $urlParams = "";
+                    $urlparams = "";
                     foreach ($fields as $key  $value) {
-                        if (!empty($urlParams)) {
-                            $urlParams .= "&";
+                        if (!empty($urlparams)) {
+                            $urlparams .= "&";
                         }
-                        $urlParams .= $key . "=" . rawurlencode($value);
+                        $urlparams .= $key . "=" . rawurlencode($value);
                     }
                     //create a new url that passes in all the information for context, assignment and userId
                     $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
-                    $results['reporturl'] = $url . "?" . $urlParams;
+                    $results['reporturl'] = $url . "?" . $urlparams;
                 }
             }
         } else {
@@ -759,40 +759,40 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             // We found some scores, let's update the DB.
             $dbScores = $DB->get_records('plagiarism_vericite_files', array('cm'$cmid), '', 'id, cm, userid, identifier, similarityscore, timeretrieved');
             $sql = "INSERT INTO {plagiarism_vericite_files} (id, cm, userid, identifier, similarityscore, timeretrieved, data, status) VALUES ";
-            $executeQuery = false;
-            foreach ($apiscores as $apiScore) {
+            $executequery = false;
+            foreach ($apiscores as $apiscore) {
                 foreach ($dbScores as $dbScore) {
-                    if ($dbScore->cm == $apiScore->cm && $dbScore->userid == $apiScore->userid 
-                            && $dbScore->identifier == $apiScore->identifier) {
+                    if ($dbScore->cm == $apiscore->cm && $dbScore->userid == $apiscore->userid 
+                            && $dbScore->identifier == $apiscore->identifier) {
                         //we found an existing score in the db, update it
-                        $apiScore->id = $dbScore->id;
+                        $apiscore->id = $dbScore->id;
                         break;
                     }
                 }
 
-                if ($executeQuery) {
+                if ($executequery) {
                     //add a comma since this isn't the first
                     $sql .= ",";
                 } else {
                     //we have at least one update
-                    $executeQuery = true;
+                    $executequery = true;
                 }
 
-                $id = (empty($apiScore->id)) ? "null" : $apiScore->id;
-                $sql .= "(". $id . "," .$apiScore->cm . "," .$apiScore->userid . ",'" .$apiScore->identifier . "'," .$apiScore->similarityscore . "," .$apiScore->timeretrieved . ",'" .$apiScore->data . "'," . $apiScore->status . ")";
+                $id = (empty($apiscore->id)) ? "null" : $apiscore->id;
+                $sql .= "(". $id . "," .$apiscore->cm . "," .$apiscore->userid . ",'" .$apiscore->identifier . "'," .$apiscore->similarityscore . "," .$apiscore->timeretrieved . ",'" .$apiscore->data . "'," . $apiscore->status . ")";
             }
-            if ($executeQuery) {
+            if ($executequery) {
                 try {
                     // TODO: Create an Oracle version of this query
                     $sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), timeretrieved=VALUES(timeretrieved), status=VALUES(status), data=VALUE(data)";
                     $DB->execute($sql);
                 } catch (Exception $e) {
                     //the fancy bulk update query didn't work, so fall back to one update at a time
-                    foreach ($apiscores as $apiScore) {
-                        if (!empty($apiScore->id)) {
-                            $DB->update_record('plagiarism_vericite_files', $apiScore);
+                    foreach ($apiscores as $apiscore) {
+                        if (!empty($apiscore->id)) {
+                            $DB->update_record('plagiarism_vericite_files', $apiscore);
                         } else { //insert
-                            $DB->insert_record('plagiarism_vericite_files', $apiScore);
+                            $DB->insert_record('plagiarism_vericite_files', $apiscore);
                         }
                     }
                 }
