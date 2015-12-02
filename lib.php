@@ -633,18 +633,18 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         plagiarism_vericite_log("VeriCite: cron submit success.");
                     } else {
                         // Error of some sort, do not save.
-                        throw new Exception('failed to send file to VeriCite: ' . $status);
+                        throw new Exception('failed to send file to VeriCite: '.$status);
                     }
                     unlink($filename);
                     // Now update the record to show we have retreived it.
                     $dbfile->status = $this->STATUS_SUCCESS;
                     $dbfile->data = "";
                     $DB->update_record('plagiarism_vericite_files', $dbfile);
-                    //clear cache scores so that the score will be looked up immediately
+                    // Clear cache scores so that the score will be looked up immediately.
                     $DB->execute("delete from {plagiarism_vericite_score} where cm = " . $dbfile->cm);
                 } catch (Exception $e) {
                     plagiarism_vericite_log("Cron Error", $e);
-                    // Something happened, unlock this to try again later.
+                    // Something unexpected happened, unlock this to try again later.
                     if ($dbfile->attempts < 500) {
                         $dbfile->status = $this->STATUS_SEND;
                         $dbfile->attempts = $dbfile->attempts + 1;
@@ -704,19 +704,18 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $executequery = false;
             foreach ($apiscores as $apiscore) {
                 foreach ($dbscores as $dbscore) {
-                    if ($dbscore->cm == $apiscore->cm && $dbscore->userid == $apiscore->userid 
-                            && $dbscore->identifier == $apiscore->identifier) {
-                        //we found an existing score in the db, update it
+                    if ($dbscore->cm == $apiscore->cm && $dbscore->userid == $apiscore->userid && $dbscore->identifier == $apiscore->identifier) {
+                        // We found an existing score in the db, update it.
                         $apiscore->id = $dbscore->id;
                         break;
                     }
                 }
 
                 if ($executequery) {
-                    //add a comma since this isn't the first
+                    // Add a comma since this isn't the first.
                     $sql .= ",";
                 } else {
-                    //we have at least one update
+                    // We have at least one update.
                     $executequery = true;
                 }
 
@@ -725,7 +724,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             }
             if ($executequery) {
                 try {
-                    // TODO: Create an Oracle version of this query
+                    // TODO: Create an Oracle version of this query.
                     $sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), timeretrieved=VALUES(timeretrieved), status=VALUES(status), data=VALUE(data)";
                     $DB->execute($sql);
                 } catch (Exception $e) {
@@ -733,7 +732,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                     foreach ($apiscores as $apiscore) {
                         if (!empty($apiscore->id)) {
                             $DB->update_record('plagiarism_vericite_files', $apiscore);
-                        } else { //insert
+                        } else {
                             $DB->insert_record('plagiarism_vericite_files', $apiscore);
                         }
                     }
@@ -750,15 +749,15 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     }
 
     private function plagiarism_vericite_generate_url($url, $context, $assignment=null, $user=null) {
-        if (!$this->plagiarism_vericite_ends_with($url, "/")) {
-            $url .= "/";
+        if (!$this->plagiarism_vericite_ends_with($url, '/')) {
+            $url .= '/';
         }
         if (isset($context)) {
-            $url = $url . $context . "/";
+            $url = $url . $context . '/';
             if (isset($assignment)) {
-                $url .= $assignment . "/";
+                $url .= $assignment . '/';
                 if (isset($user)) {
-                    $url .= $user . "/";
+                    $url .= $user . '/';
                 }
             }
         }
@@ -771,7 +770,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     }
 
     private function plagiarism_vericite_identifier_prefix($consumer, $cmid, $userid) {
-        return $consumer . "_" . $cmid . "_" . $userid . "_";
+        return $consumer . '_' . $cmid . '_' . $userid . '_';
     }
 
     private function plagiarism_vericite_log($logstring, $e=null) {
