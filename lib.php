@@ -34,11 +34,11 @@ require_once($CFG->dirroot.'/plagiarism/lib.php');
 
 class plagiarism_plugin_vericite extends plagiarism_plugin {
 
-    define('STATUS_SEND', 0);
-    define('STATUS_SUCCESS', 1);
-    define('STATUS_LOCKED', 2);
-    define('STATUS_FAILED', 3);
-    define('TOKEN_CACHE_MIN', 20);
+    private $statussend = 0;
+    private $statussuccess = 1;
+    private $statuslocked = 2;
+    private $statusfailed = 3;
+    private $tokencachemin = 20;
 
     public function get_settings() {
         static $plagiarismsettings;
@@ -208,7 +208,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             foreach ($contentscore as $content) {
                 $mycontent = $content;
                 plagiarism_vericite_log("VeriCite: content: " . print_r($mycontent, true));
-                if ($content->status == $this->STATUS_SUCCESS && time() - (60 * $SCORE_CACHE_MIN) < $content->timeretrieved) {
+                if ($content->status == $this->statussuccess && time() - (60 * $SCORE_CACHE_MIN) < $content->timeretrieved) {
                     // Since our reports are dynamic, only use the db as a cache.
                     // if its too old of a results, don't set the score and just grab a new one from the API.
                     $score = $content->similarityscore;
@@ -243,7 +243,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             plagiarism_vericite_log("VeriCite: Score lookup throttled, didn't look up score in VeriCite: score: " . $score . " ; now: " . time());
         }
 
-        if ($score < 0 && (empty($mycontent) || $mycontent->status == $this->STATUS_SUCCESS)) {
+        if ($score < 0 && (empty($mycontent) || $mycontent->status == $this->statussuccess)) {
             plagiarism_vericite_log("VeriCite: can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded");
             // Ok can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded.
             $user = ($userid == $USER->id ? $USER : $DB->get_record('user', array('id'$userid)));
@@ -273,7 +273,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $newelement->identifier = $fileid;
             $newelement->userid = $userid;
             $newelement->data = base64_encode(serialize($customdata));
-            $newelement->status = $this->STATUS_SEND;
+            $newelement->status = $this->statussend;
             try {
                 if ($update) {
                     $DB->update_record('plagiarism_vericite_files', $newelement);
@@ -304,7 +304,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                     plagiarism_vericite_log("VeriCite: db token: " . print_r($dbtoken, true));
                     // Instructors can have multiple tokens, see if any of them aren't expired.
                     // If it's not an instructor, there should only be one token in the array anyways.
-                    if (time() - (60 * $this->TOKEN_CACHE_MIN) < $dbtoken->timeretrieved) {
+                    if (time() - (60 * $this->tokencachemin) < $dbtoken->timeretrieved) {
                         // We found an existing token, set token and break out.
                         $token = $dbtoken->token;
                         break;
@@ -563,7 +563,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         $plagiarismsettings = $this->get_settings();
 
         // Submit queued files.
-        $dbfiles = $DB->get_records('plagiarism_vericite_files', array('status'$this->STATUS_SEND), '', 'id, cm, userid, identifier, data, status, attempts');
+        $dbfiles = $DB->get_records('plagiarism_vericite_files', array('status'$this->statussend), '', 'id, cm, userid, identifier, data, status, attempts');
         if (!empty($dbfiles)) {
             $fileids = array();
             foreach ($dbfiles as $dbfile) {
@@ -572,7 +572,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             }
             list($dsql, $dparam) = $DB->get_in_or_equal($fileids);
             // TODO: Oracle 1000 in clause limit
-            $DB->execute("update {plagiarism_vericite_files} set status = " . $this->STATUS_LOCKED . " where id " . $dsql, $dparam);
+            $DB->execute("update {plagiarism_vericite_files} set status = " . $this->statuslocked . " where id " . $dsql, $dparam);
 
             foreach ($dbfiles as $dbfile) {
                 try {
@@ -637,7 +637,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                     }
                     unlink($filename);
                     // Now update the record to show we have retreived it.
-                    $dbfile->status = $this->STATUS_SUCCESS;
+                    $dbfile->status = $this->statussuccess;
                     $dbfile->data = "";
                     $DB->update_record('plagiarism_vericite_files', $dbfile);
                     // Clear cache scores so that the score will be looked up immediately.
@@ -646,10 +646,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                     plagiarism_vericite_log("Cron Error", $e);
                     // Something unexpected happened, unlock this to try again later.
                     if ($dbfile->attempts < 500) {
-                        $dbfile->status = $this->STATUS_SEND;
+                        $dbfile->status = $this->statussend;
                         $dbfile->attempts = $dbfile->attempts + 1;
                     } else {
-                        $dbfile->status = $this->STATUS_FAILED;
+                        $dbfile->status = $this->statusfailed;
                     }
                     $DB->update_record('plagiarism_vericite_files', $dbfile);
                 }
@@ -657,7 +657,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         }
 
         // Delete old tokens:
-        $DB->execute("delete from {plagiarism_vericite_tokens} where timeretrieved < " . (time() - (60 * $this->TOKEN_CACHE_MIN)));
+        $DB->execute("delete from {plagiarism_vericite_tokens} where timeretrieved < " . (time() - (60 * $this->tokencachemin)));
 
     }
 
@@ -685,7 +685,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         $newelement->identifier = $resultcontentid;
                         $newelement->similarityscore = $resultcontentscore;
                         $newelement->timeretrieved = time();
-                        $newelement->status = $this->STATUS_SUCCESS;
+                        $newelement->status = $this->statussuccess;
                         $newelement->data = '';
                         $apiscores = array_merge($apiscores, array($newelement));
                         if ($resultcontentid == $fileid && $resultuserid == $userid) {
