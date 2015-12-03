@@ -504,9 +504,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         }
 
         $mform->addElement('checkbox', 'plagiarism_exclude_quotes', get_string("excludequotesvericite", "plagiarism_vericite"));
-        $mform->addHelpButton('plagiarism_exclude_quotes', 'excludequotesvericite', 'plagiarism_vericite');
+        $mform->addHelpButton('plagiarism_exclude_quotes', 'excludequotesassignment', 'plagiarism_vericite');
         $mform->disabledIf('plagiarism_exclude_quotes', 'use_vericite');
         $mform->setDefault('vericite_student_score_default', true);
+
         // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
         if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_exclude_quotes'])) {
             $mform->setDefault('plagiarism_exclude_quotes', $plagiarismvalues['plagiarism_exclude_quotes']);
@@ -773,19 +774,20 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         return $consumer . '_' . $cmid . '_' . $userid . '_';
     }
 
-    private function plagiarism_vericite_log($logstring, $e=null) {
-        if (!empty($plagiarismsettings['vericite_enable_debugging']) && $plagiarismsettings['vericite_enable_debugging']) {
-            global $CFG;
-            $logfile = $CFG->dataroot.'/vericite.log';
-            if (!$fp = fopen($logfile, 'a')) {
-                return;
-            }
-            fwrite($fp, date('c').' - '.$logstring."\n");
-            // See if there is an exception to report on.
-            if (isset($e) && is_callable(array($e, 'getMessage'))) {
-                fwrite($fp, $e->getMessage() . " \n");
-            }
-            fclose($fp);
+}
+
+function plagiarism_vericite_log($logstring, $e=null) {
+    if (!empty($plagiarismsettings['vericite_enable_debugging']) && $plagiarismsettings['vericite_enable_debugging']) {
+        global $CFG;
+        $logfile = $CFG->dataroot.'/vericite.log';
+        if (!$fp = fopen($logfile, 'a')) {
+            return;
         }
+        fwrite($fp, date('c').' - '.$logstring."\n");
+        // See if there is an exception to report on.
+        if (isset($e) && is_callable(array($e, 'getMessage'))) {
+            fwrite($fp, $e->getMessage() . " \n");
+        }
+        fclose($fp);
     }
 }
