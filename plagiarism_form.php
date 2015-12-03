@@ -18,12 +18,13 @@ require_once($CFG->dirroot.'/lib/formslib.php');
 
 class plagiarism_setup_form extends moodleform {
 
-    // Define the form
+    // Define the form.
     function definition () {
         global $CFG;
 
-        $mform =& $this->_form;
         $choices = array('No','Yes');
+
+        $mform =& $this->_form;
         $mform->addElement('html', get_string('vericiteexplain', 'plagiarism_vericite'));
         $mform->addElement('checkbox', 'vericite_use', get_string('usevericite', 'plagiarism_vericite'));
 

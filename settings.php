@@ -35,7 +35,7 @@ if ($mform->is_cancelled()) {
 
 echo $OUTPUT->header();
 if (($data = $mform->get_data()) && confirm_sesskey()) {
-    // Set checkboxes to 0 is they aren't set
+    // Set checkboxes to 0 if they aren't set.
     if (!isset($data->vericite_use)) {
         $data->vericite_use = 0;
     }
