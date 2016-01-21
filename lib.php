@@ -32,37 +32,14 @@ if (!defined('MOODLE_INTERNAL')) {
 global $CFG;
 require_once($CFG->dirroot.'/plagiarism/lib.php');
 
+define('PLAGIARISM_VERICITE_STATUS_SEND', 0);
+define('PLAGIARISM_VERICITE_STATUS_SUCCESS', 1);
+define('PLAGIARISM_VERICITE_STATUS_LOCKED', 2);
+define('PLAGIARISM_VERICITE_STATUS_FAILED', 3);
+define('PLAGIARISM_VERICITE_TOKEN_CACHE_MIN', 20);
+
+
 class plagiarism_plugin_vericite extends plagiarism_plugin {
-
-    private $statussend = 0;
-    private $statussuccess = 1;
-    private $statuslocked = 2;
-    private $statusfailed = 3;
-    private $tokencachemin = 20;
-
-    public function get_settings() {
-        static $plagiarismsettings;
-        if (!empty($plagiarismsettings) || $plagiarismsettings === false) {
-            return $plagiarismsettings;
-        }
-        $plagiarismsettings = (array)get_config('plagiarism');
-        // Check if enabled.
-        if (isset($plagiarismsettings['vericite_use']) && $plagiarismsettings['vericite_use']) {
-            // Now check to make sure required settings are set!
-            if (empty($plagiarismsettings['vericite_api'])) {
-                print_error("VeriCite API URL not set!");
-            }
-            if (empty($plagiarismsettings['vericite_accountid'])) {
-                print_error("VeriCite Account Id not set!");
-            }
-            if (empty($plagiarismsettings['vericite_secretkey'])) {
-                print_error("VeriCite Secret not set!");
-            }
-            return $plagiarismsettings;
-        } else {
-            return false;
-        }
-    }
 
     /**
      * hook to allow plagiarism specific information to be displayed beside a submission 
@@ -80,7 +57,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 return;
             }
         }
-        $plagiarismsettings = $this->get_settings();
+        $plagiarismsettings = plagiarism_vericite_get_settings();
         plagiarism_vericite_log("VeriCite: get_links");
         plagiarism_vericite_log(print_r($linkarray, true));
         $vericite = array();
@@ -154,7 +131,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         global $DB, $USER, $COURSE, $OUTPUT, $CFG;
         $SCORE_CACHE_MIN = 60;
         $SCORE_FETCH_CACHE_MIN = 5;
-        $plagiarismsettings = $this->get_settings();
+        $plagiarismsettings = plagiarism_vericite_get_settings();
         if (empty($plagiarismsettings)) {
             // VeriCite is not enabled
             return false;
@@ -208,7 +185,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             foreach ($contentscore as $content) {
                 $mycontent = $content;
                 plagiarism_vericite_log("VeriCite: content: " . print_r($mycontent, true));
-                if ($content->status == $this->statussuccess && time() - (60 * $SCORE_CACHE_MIN) < $content->timeretrieved) {
+                if ($content->status == PLAGIARISM_VERICITE_STATUS_SUCCESS && time() - (60 * $SCORE_CACHE_MIN) < $content->timeretrieved) {
                     // Since our reports are dynamic, only use the db as a cache.
                     // if its too old of a results, don't set the score and just grab a new one from the API.
                     $score = $content->similarityscore;
@@ -243,7 +220,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             plagiarism_vericite_log("VeriCite: Score lookup throttled, didn't look up score in VeriCite: score: " . $score . " ; now: " . time());
         }
 
-        if ($score < 0 && (empty($mycontent) || $mycontent->status == $this->statussuccess)) {
+        if ($score < 0 && (empty($mycontent) || $mycontent->status == PLAGIARISM_VERICITE_STATUS_SUCCESS)) {
             plagiarism_vericite_log("VeriCite: can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded");
             // Ok can't find the score in the cache, the db, or VeriCite and its not scheduled to be uploaded.
             $user = ($userid == $USER->id ? $USER : $DB->get_record('user', array('id' => $userid)));
@@ -273,7 +250,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $newelement->identifier = $fileid;
             $newelement->userid = $userid;
             $newelement->data = base64_encode(serialize($customdata));
-            $newelement->status = $this->statussend;
+            $newelement->status = PLAGIARISM_VERICITE_STATUS_SEND;
             try {
                 if ($update) {
                     $DB->update_record('plagiarism_vericite_files', $newelement);
@@ -304,7 +281,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                     plagiarism_vericite_log("VeriCite: db token: " . print_r($dbtoken, true));
                     // Instructors can have multiple tokens, see if any of them aren't expired.
                     // If it's not an instructor, there should only be one token in the array anyways.
-                    if (time() - (60 * $this->tokencachemin) < $dbtoken->timeretrieved) {
+                    if (time() - (60 * PLAGIARISM_VERICITE_TOKEN_CACHE_MIN) < $dbtoken->timeretrieved) {
                         // We found an existing token, set token and break out.
                         $token = $dbtoken->token;
                         break;
@@ -321,12 +298,12 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         $fields['externalContentId'] = $fileid;
                         $fields['userRole'] = 'Learner';
                         // Also make sure their token requires the context id, assignment id and user id
-                        $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
+                        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
                     } else {
                         // Send over the param for role so that instructors can see more details.
                         $fields['userRole'] = 'Instructor';
                         // Instructors only need to pass in the site id since they can view anything in this site
-                        $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
+                        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
                     }
                     $fields['tokenRequest'] = 'true';
                     plagiarism_vericite_log("VeriCite: requesting token: url: " . $url . " ; fields: " . print_r($fields, true));
@@ -387,7 +364,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         $urlparams .= $key . "=" . rawurlencode($value);
                     }
                     // Create a new url that passes in all the information for context, assignment and userid.
-                    $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
+                    $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
                     $results['reporturl'] = $url . "?" . $urlparams;
                 }
             }
@@ -405,7 +382,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
      */
     public function save_form_elements($data) {
         global $DB;
-        if (!$this->get_settings()) {
+        if (!plagiarism_vericite_get_settings()) {
             return;
         }
 
@@ -433,7 +410,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         // Now save the assignment title and instructrions and files (not a big deal if this fails, so wrap in try catch).
         try {
-            $plagiarismsettings = $this->get_settings();
+            $plagiarismsettings = plagiarism_vericite_get_settings();
             if ($plagiarismsettings && !empty($data->use_vericite)) {
                 $fields = array();
                 $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
@@ -442,7 +419,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 $fields['assignmentTitle'] = $data->name;
                 $fields['assignmentInstructions'] = $data->intro;
                 $fields['assignmentExcludeQuotes'] = !empty($data->plagiarism_exclude_quotes) ? "true" : "false";
-                $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $data->course, $data->coursemodule);
+                $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $data->course, $data->coursemodule);
                 $c = new curl(array('proxy' => true));
                 $status = json_decode($c->post($url, $fields));
                 plagiarism_vericite_log("Cron submit: url: " . $url . " ; fields: " . print_r($fields, true));
@@ -459,7 +436,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
      */
     public function get_form_elements_module($mform, $context, $modulename = '') {
         global $CFG, $DB;
-        $plagiarismsettings = $this->get_settings();
+        $plagiarismsettings = plagiarism_vericite_get_settings();
         if (!$plagiarismsettings) {
             return;
         }
@@ -553,119 +530,18 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     public function update_status($course, $cm) {
         // Called at top of submissions/grading pages - allows printing of admin style links or updating status
     }
-
-    /**
-     * Called by admin/cron.php 
-     *
-     */
-    public function cron() {
-        global $CFG, $DB;
-
-        $plagiarismsettings = $this->get_settings();
-
-        // Submit queued files.
-        $dbfiles = $DB->get_records('plagiarism_vericite_files', array('status' => $this->statussend), '', 'id, cm, userid, identifier, data, status, attempts');
-        if (!empty($dbfiles)) {
-            $fileids = array();
-            foreach ($dbfiles as $dbfile) {
-                // Lock DB records that will be worked on.
-                array_push($fileids, $dbfile->id);
-            }
-            list($dsql, $dparam) = $DB->get_in_or_equal($fileids);
-            // TODO: Oracle 1000 in clause limit
-            $DB->execute("update {plagiarism_vericite_files} set status = " . $this->statuslocked . " where id " . $dsql, $dparam);
-
-            foreach ($dbfiles as $dbfile) {
-                try {
-                    $customdata = unserialize(base64_decode($dbfile->data));
-                    $userid = $customdata['userid'];
-                    $vericite = $customdata['vericite'];
-                    if (!empty($customdata['file'])) {
-                        $file = get_file_storage();
-                        $file = unserialize($customdata['file']);
-                    }
-                    $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $customdata['courseid'], $customdata['cmid'], $userid);
-                    $fields = array();
-                    if (!empty($customdata['userFirstName'])) {
-                        $fields['userFirstName'] = $customdata['userFirstName'];
-                    }
-                    if (!empty($customdata['userLastName'])) {
-                        $fields['userLastName'] = $customdata['userLastName'];
-                    }
-                    if (!empty($customdata['userEmail'])) {
-                        $fields['userEmail'] = $customdata['userEmail'];
-                    }
-                    $fields['userRole'] = $customdata['contentUserGradeAssignment'] ?  'Instructor' : 'Learner';
-                    $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
-                    $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
-                    if (isset($vericite['assignmentTitle'])) {
-                        $fields['assignmentTitle'] = $vericite['assignmentTitle'];
-                    }
-                    $fields['externalContentId'] = $dbfile->identifier;
-                    // Create a tmp file to store data.
-                    if (!check_dir_exists($customdata['dataroot']."/plagiarism/", true, true)) {
-                        mkdir($customdata['dataroot']."/plagiarism/", 0700);
-                    }
-                    $filename = $customdata['dataroot'] . "/plagiarism/" . time() . $vericite['file']['filename'];
-                    $fh = fopen($filename, 'w');
-                    if (!empty($vericite['file']['type']) && $vericite['file']['type'] == "file") {
-                        if (!empty($file->filepath)) {
-                            fwrite($fh, file_get_contents($file->filepath));
-                        } else {
-                            fwrite($fh, $file->get_content());
-                        }
-                    } else {
-                        fwrite($fh, $vericite['file']['content']);
-                    }
-                    fclose($fh);
-                    $fields['fileName'] = $vericite['file']['filename'];
-
-                    plagiarism_vericite_log("VeriCite: cron submit: url: " . $url . " ; fields: " . print_r($fields, true));
-
-                    if (class_exists('CURLFile')) {
-                        $fields['filedata'] = new CURLFile($filename);
-                    } else {
-                        $fields['filedata'] = '@' . $filename;
-                    }
-                    $c = new curl(array('proxy' => true));
-                    $status = json_decode($c->post($url, $fields));
-                    if (!empty($status) && isset($status->result) && strcmp("success", $status->result) == 0) {
-                        // Success: do nothing.
-                        plagiarism_vericite_log("VeriCite: cron submit success.");
-                    } else {
-                        // Error of some sort, do not save.
-                        throw new Exception('failed to send file to VeriCite: '.$status);
-                    }
-                    unlink($filename);
-                    // Now update the record to show we have retreived it.
-                    $dbfile->status = $this->statussuccess;
-                    $dbfile->data = "";
-                    $DB->update_record('plagiarism_vericite_files', $dbfile);
-                    // Clear cache scores so that the score will be looked up immediately.
-                    $DB->execute("delete from {plagiarism_vericite_score} where cm = " . $dbfile->cm);
-                } catch (Exception $e) {
-                    plagiarism_vericite_log("Cron Error", $e);
-                    // Something unexpected happened, unlock this to try again later.
-                    if ($dbfile->attempts < 500) {
-                        $dbfile->status = $this->statussend;
-                        $dbfile->attempts = $dbfile->attempts + 1;
-                    } else {
-                        $dbfile->status = $this->statusfailed;
-                    }
-                    $DB->update_record('plagiarism_vericite_files', $dbfile);
-                }
-            }
-        }
-
-        // Delete old tokens:
-        $DB->execute("delete from {plagiarism_vericite_tokens} where timeretrieved < " . (time() - (60 * $this->tokencachemin)));
-
-    }
+	
+	/**
+	 * called by admin/cron.php 
+	 *
+	 */
+	public function cron() {
+	}
 
     function plagiarism_vericite_get_scores($plagiarismsettings, $courseid, $cmid, $fileid, $userid) {
         global $DB;
         $score = -1;
-        $url = $this->plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $courseid, $cmid);
+        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $courseid, $cmid);
         $fields = array();
         $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
         $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
@@ -686,7 +562,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         $newelement->identifier = $resultcontentid;
                         $newelement->similarityscore = $resultcontentscore;
                         $newelement->timeretrieved = time();
-                        $newelement->status = $this->statussuccess;
+                        $newelement->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
                         $newelement->data = '';
                         $apiscores = array_merge($apiscores, array($newelement));
                         if ($resultcontentid == $fileid && $resultuserid == $userid) {
@@ -745,26 +621,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         return $score;
     }
 
-    private function plagiarism_vericite_ends_with($str, $test) {
-        return substr_compare($str, $test, -strlen($test), strlen($test)) === 0;
-    }
-
-    private function plagiarism_vericite_generate_url($url, $context, $assignment=null, $user=null) {
-        if (!$this->plagiarism_vericite_ends_with($url, '/')) {
-            $url .= '/';
-        }
-        if (isset($context)) {
-            $url = $url . $context . '/';
-            if (isset($assignment)) {
-                $url .= $assignment . '/';
-                if (isset($user)) {
-                    $url .= $user . '/';
-                }
-            }
-        }
-        return $url;
-    }
-
     private function plagiarism_vericite_get_css_rank ($score) {
         $rank = ceil((100 - (int)$score) / 10);
         return 'vericite-rank-' . $rank;
@@ -790,4 +646,48 @@ function plagiarism_vericite_log($logstring, $e=null) {
         }
         fclose($fp);
     }
+}
+
+function plagiarism_vericite_get_settings() {
+    static $plagiarismsettings;
+    if (!empty($plagiarismsettings) || $plagiarismsettings === false) {
+        return $plagiarismsettings;
+    }
+    $plagiarismsettings = (array)get_config('plagiarism');
+    // Check if enabled.
+    if (isset($plagiarismsettings['vericite_use']) && $plagiarismsettings['vericite_use']) {
+        // Now check to make sure required settings are set!
+        if (empty($plagiarismsettings['vericite_api'])) {
+            print_error("VeriCite API URL not set!");
+        }
+        if (empty($plagiarismsettings['vericite_accountid'])) {
+            print_error("VeriCite Account Id not set!");
+        }
+        if (empty($plagiarismsettings['vericite_secretkey'])) {
+            print_error("VeriCite Secret not set!");
+        }
+        return $plagiarismsettings;
+    } else {
+        return false;
+    }
+}
+
+function plagiarism_vericite_ends_with($str, $test) {
+    return substr_compare($str, $test, -strlen($test), strlen($test)) === 0;
+}
+
+function plagiarism_vericite_generate_url($url, $context, $assignment=null, $user=null) {
+    if (!plagiarism_vericite_ends_with($url, '/')) {
+        $url .= '/';
+    }
+    if (isset($context)) {
+        $url = $url . $context . '/';
+        if (isset($assignment)) {
+            $url .= $assignment . '/';
+            if (isset($user)) {
+                $url .= $user . '/';
+            }
+        }
+    }
+    return $url;
 }

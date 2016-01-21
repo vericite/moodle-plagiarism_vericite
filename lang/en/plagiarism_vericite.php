@@ -52,3 +52,4 @@ $string['excludequotesvericite'] = 'Exclude Quotes';
 $string['excludequotesvericite_help'] = 'The default for all reports submitted to a Moodle assignment. To reduce the number of false VeriCite matches, we recommend excluding quotes by default. Instructors will still retain the ability to view matches within quotes while viewing an individual VeriCite report.';
 $string['excludequotesassignment'] = 'Exclude Quotes';
 $string['excludequotesassignment_help'] = 'To reduce the number of false matches, we recommend excluding material found inside quotes. Instructors will still retain the ability to view matches within quotes while viewing an individual VeriCite report.';
+$string['sendfiles'] = 'VeriCite cron job to submit files';
