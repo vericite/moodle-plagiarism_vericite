@@ -1,54 +1,60 @@
-span.plagiarismreport span.rank10,
-span.plagiarismreport span.rank9,
-span.plagiarismreport span.rank8,
-span.plagiarismreport span.rank7,
-span.plagiarismreport span.rank6,
-span.plagiarismreport span.rank5,
-span.plagiarismreport span.rank4,
-span.plagiarismreport span.rank3,
-span.plagiarismreport span.rank2,
-span.plagiarismreport span.rank1 {
-       color: #FFFFFF;
-       font-weight: bold;
-       padding: 2px;
+/**
+ * File styles.css.
+ * Contains vendor-prefixed declarations for the VeriCite plagiarism 
+ * detection service.
+ */
+
+.vericite-report .vericite-rank-10,
+.vericite-report .vericite-rank-9,
+.vericite-report .vericite-rank-8,
+.vericite-report .vericite-rank-7,
+.vericite-report .vericite-rank-6,
+.vericite-report .vericite-rank-5,
+.vericite-report .vericite-rank-4,
+.vericite-report .vericite-rank-3,
+.vericite-report .vericite-rank-2,
+.vericite-report .vericite-rank-1 {
+    color: #fff;
+    font-weight: bold;
+    padding: 0.2em;
 }
 
-span.plagiarismreport span.rank1 {
-       background: #CF0000;
+.vericite-report .vericite-rank-1 {
+    background-color: #cf0000;
 }
 
-span.plagiarismreport span.rank2 {
-       background: #F15A24;
+.vericite-report .vericite-rank-2 {
+    background-color: #f15a24;
 }
 
-span.plagiarismreport span.rank3 {
-       background: #F7931E;
+.vericite-report .vericite-rank-3 {
+    background-color: #f7931e;
 }
 
-span.plagiarismreport span.rank4 {
-       background: #FBB03B;
+.vericite-report .vericite-rank-4 {
+    background-color: #fbb03b;
 }
 
-span.plagiarismreport span.rank5 {
-       background: #FFE313;
+.vericite-report .vericite-rank-5 {
+    background-color: #ffe313;
 }
 
-span.plagiarismreport span.rank6 {
-       background: #D9E021;
+.vericite-report .vericite-rank-6 {
+    background-color: #d9e021;
 }
 
-span.plagiarismreport span.rank7 {
-       background: #8CC63F;
+.vericite-report .vericite-rank-7 {
+    background-color: #8cc63f;
 }
 
-span.plagiarismreport span.rank8 {
-       background: #22B573;
+.vericite-report .vericite-rank-8 {
+    background-color: #22b573;
 }
 
-span.plagiarismreport span.rank9 {
-       background: #00AEE3;
+.vericite-report .vericite-rank-9 {
+    background-color: #00aee3;
 }
 
-span.plagiarismreport span.rank10 {
-       background: #196DD2;
+.vericite-report .vericite-rank-10 {
+    background-color: #196dd2;
 }

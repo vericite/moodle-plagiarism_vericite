@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-$plugin->version =  2015102100;
+$plugin->version =  2015120200;
 $plugin->requires = 2013051406;
 $plugin->component = 'plagiarism_vericite';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = "2.18";
-
+$plugin->release = '3.0';
