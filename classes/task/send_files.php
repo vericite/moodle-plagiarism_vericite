@@ -93,7 +93,7 @@ class send_files extends \core\task\scheduled_task {
                         plagiarism_vericite_log("VeriCite: cron submit success.");
                     } else {
                         // Error of some sort, do not save.
-                        throw new \Exception('failed to send file to VeriCite: '.$status->result);
+                        throw new \Exception('failed to send file to VeriCite');
                     }
                     unlink($filename);
                     // Now update the record to show we have retreived it.
@@ -102,7 +102,7 @@ class send_files extends \core\task\scheduled_task {
                     $DB->update_record('plagiarism_vericite_files', $dbfile);
                     // Clear cache scores so that the score will be looked up immediately.
                     $DB->execute("delete from {plagiarism_vericite_score} where cm = " . $dbfile->cm);
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     plagiarism_vericite_log("Cron Error", $e);
                     // Something unexpected happened, unlock this to try again later.
                     if ($dbfile->attempts < 500) {
