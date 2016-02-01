@@ -37,6 +37,11 @@ define('PLAGIARISM_VERICITE_STATUS_SUCCESS', 1);
 define('PLAGIARISM_VERICITE_STATUS_LOCKED', 2);
 define('PLAGIARISM_VERICITE_STATUS_FAILED', 3);
 define('PLAGIARISM_VERICITE_TOKEN_CACHE_MIN', 20);
+define('PLAGIARISM_VERICITE_ACTION_ASSIGNMENTS', "assignments");
+define('PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST', "reportsSubmitRequest");
+define('PLAGIARISM_VERICITE_ACTION_REPORTS_SCORES', "reportsScores");
+define('PLAGIARISM_VERICITE_ACTION_REPORTS_URLS', "reportsUrls");
+define('PLAGIARISM_VERICITE_REQUEST_ATTEMPTS', 4);
 
 
 class plagiarism_plugin_vericite extends plagiarism_plugin {
@@ -269,12 +274,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $results['score'] = $score;
             if ($viewfullreport) {
                 // See if the token already exists.
-                $conditions = array('cm' => $vericite['cmid'], 'userid' => $USER->id);
-                if (!$gradeassignment) {
-                    // Instructors can view anything in the site, so don't pass in the identifier.
-                    //however, this isn't an instructor, so look it up by the fileid
-                    $conditions['identifier'] = $fileid;
-                }
+                $conditions = array('cm' => $vericite['cmid'], 'userid' => $USER->id, 'identifier' => $fileid);
                 plagiarism_vericite_log("VeriCite: looking for token: " . print_r($conditions, true));
                 $dbtokens = $DB->get_records('plagiarism_vericite_tokens', $conditions);
                 foreach ($dbtokens as $dbtoken) {
@@ -290,82 +290,86 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
                 if (!isset($token)) {
                     // Didn't find it in cache, get a new token.
+					$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_URLS, $COURSE->id);
                     $fields = array();
-                    $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
-                    $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
+                    // $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
+                    // $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
+					$fields['assignmentIDFilter'] = $vericite['cmid'];
+					$fields['tokenUser'] = $USER->id;
                     if (!$gradeassignment) {
                         // Non instructors can only see their own items.
-                        $fields['externalContentId'] = $fileid;
-                        $fields['userRole'] = 'Learner';
+                        $fields['externalContentIDFilter'] = $fileid;
+                        $fields['userIDFilter'] = $USER->id;
+						$fields['tokenUserRole'] = 'Learner';
                         // Also make sure their token requires the context id, assignment id and user id
-                        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
+                        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], "", $COURSE->id, $vericite['cmid'], $USER->id);
                     } else {
                         // Send over the param for role so that instructors can see more details.
-                        $fields['userRole'] = 'Instructor';
-                        // Instructors only need to pass in the site id since they can view anything in this site
-                        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id);
+                        $fields['tokenUserRole'] = 'Instructor';
                     }
-                    $fields['tokenRequest'] = 'true';
+					//create curl request
+					$ch = curl_init();
+					// set url
+					$url .= "?" . http_build_query($fields);
+					curl_setopt($ch, CURLOPT_URL, $url);
+					//set timeout in seconds:
+					curl_setopt($ch,CURLOPT_CONNECTTIMEOUT, 120);
+					//we expect a response, so set the flag:
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+					//set headers for consumer & secret
+					curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+					    'consumer: ' . $plagiarismsettings['vericite_accountid'],
+					    'consumerSecret: ' . $plagiarismsettings['vericite_secretkey']
+					    ));
+					//log headers
+					curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+					curl_setopt($ch, CURLOPT_HTTPGET, true);
+					//execute post
                     plagiarism_vericite_log("VeriCite: requesting token: url: " . $url . " ; fields: " . print_r($fields, true));
-                    $c = new curl(array('proxy' => true));
-                    $status = json_decode($c->post($url, $fields));
-                    plagiarism_vericite_log("VeriCite: token response: " . print_r($status, true));
-                    if (!empty ($status) && isset ($status->token)) {
-                        $token = $status->token;
-
-                        // Store token in db to use again.
-                        $id = - 1;
-                        foreach ($dbtokens as $dbtoken) {
-                            if ($dbtoken->cm == $cmid && $dbtoken->userid == $USER->id && ($gradeassignment || $dbtoken->identifier == $fileid)) {
-                                // We found an existing score in the db, update it.
-                                $id = $dbtoken->id;
-                            }
-                            // This is a matched db item from the query above,
-                            // so we should update the token id and time no matter what.
-                            $dbtoken->token = $token;
-                            $dbtoken->timeretrieved = time ();
-                            $DB->update_record ( 'plagiarism_vericite_tokens', $dbtoken );
-                        }
-
-                        if ($id < 0) {
-                            // Token doesn't already exist, add it.
-                            $newelement = new object ();
-                            $newelement->cm = $cmid;
-                            $newelement->userid = $USER->id;
-                            if (! $gradeassignment) {
-                                // Not an instructor, so make sure the token set the fileid.
-                                $newelement->identifier = $fileid;
-                            }
-                            $newelement->timeretrieved = time ();
-                            $newelement->token = $token;
-                            $DB->insert_record ('plagiarism_vericite_tokens', $newelement);
-                        }
+					$status = plagiarism_vericite_curl_exec($ch);
+                    if (!empty ($status) && isset($status->urls)) {
+						plagiarism_vericite_log("status and urls are not empty");
+						foreach ($status->urls as $reportUrlLinkResponse) {
+							plagiarism_vericite_log("for each url");
+							if(isset($reportUrlLinkResponse->externalContentID)){
+								plagiarism_vericite_log("id: " . $reportUrlLinkResponse->externalContentID);
+								//see if we found the exact token url we are looking for, if so, set it
+								if($fileid == $reportUrlLinkResponse->externalContentID){
+									$token = $reportUrlLinkResponse->url;
+								}
+								// Store token in db to use again.
+								$id = - 1;
+                    			foreach ($dbtokens as $dbtoken) {
+                            		if ($dbtoken->identifier == $reportUrlLinkResponse->externalContentID) {
+                                		// We found an existing score in the db, update it.
+                                		$id = $dbtoken->id;
+                            		
+										// This is a matched db item from the query above,
+										// so we should update the token id and time no matter what.
+										$dbtoken->token = $reportUrlLinkResponse->url;
+										$dbtoken->timeretrieved = time ();
+										$DB->update_record ( 'plagiarism_vericite_tokens', $dbtoken );
+									}
+								}
+								//if we didn't find and update the db for an existing token, go ahead and
+								//store a new record in the db for this token url
+                        		if ($id < 0) {
+                            		// Token doesn't already exist, add it.
+									$newelement = new object ();
+									$newelement->cm = $reportUrlLinkResponse->assignmentID;
+									$newelement->userid = $reportUrlLinkResponse->userID;
+									$newelement->identifier = $reportUrlLinkResponse->externalContentID;
+									$newelement->timeretrieved = time ();
+									$newelement->token = $reportUrlLinkResponse->url;
+									$DB->insert_record ('plagiarism_vericite_tokens', $newelement);
+								}
+							}
+						}
                     }
                 }
 
                 if (isset($token)) {
-                    // Create url for user.
-                    $fields = array();
-                    $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
-                    $fields['token'] = $token;
-                    $fields['externalContentId'] = $fileid;
-                    $fields['viewReport'] = 'true';
-                    if ($gradeassignment) {
-                        $fields['userRole'] = 'Instructor';
-                    } else {
-                        $fields['userRole'] = 'Learner';
-                    }
-
-                    $urlparams = "";
-                    foreach ($fields as $key => $value) {
-                        if (!empty($urlparams)) {
-                            $urlparams .= "&";
-                        }
-                        $urlparams .= $key . "=" . rawurlencode($value);
-                    }
-                    // Create a new url that passes in all the information for context, assignment and userid.
-                    $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $COURSE->id, $vericite['cmid'], $USER->id);
-                    $results['reporturl'] = $url . "?" . $urlparams;
+                    $results['reporturl'] = $token;
                 }
             }
         } else {
@@ -412,17 +416,41 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         try {
             $plagiarismsettings = plagiarism_vericite_get_settings();
             if ($plagiarismsettings && !empty($data->use_vericite)) {
-                $fields = array();
-                $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
-                $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
-                $fields['updateAssignmentDetails'] = 'true';
-                $fields['assignmentTitle'] = $data->name;
-                $fields['assignmentInstructions'] = $data->intro;
-                $fields['assignmentExcludeQuotes'] = !empty($data->plagiarism_exclude_quotes) ? "true" : "false";
-                $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $data->course, $data->coursemodule);
-                $c = new curl(array('proxy' => true));
-                $status = json_decode($c->post($url, $fields));
-                plagiarism_vericite_log("Cron submit: url: " . $url . " ; fields: " . print_r($fields, true));
+				$url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_ASSIGNMENTS, $data->course, $data->coursemodule);			
+				$fields = array();
+                $assignmentData = array();
+                $assignmentData['assignmentTitle'] = $data->name;
+                $assignmentData['assignmentInstructions'] = $data->intro;
+                $assignmentData['assignmentExcludeQuotes'] = !empty($data->plagiarism_exclude_quotes) ? true : false;
+				if(isset($data->duedate)){
+					$assignmentData['assignmentDueDate'] = $data->duedate * 1000; //VeriCite expects the time to be in milliseconds
+				}
+				//TODO: attachments (introattachments)
+
+				$fields['assignmentData'] = $assignmentData;
+				$fields_json = json_encode($fields);
+				//create curl request
+				$ch = curl_init();
+				// set url
+				curl_setopt($ch, CURLOPT_URL, $url);
+				//set timeout in seconds:
+				curl_setopt($ch,CURLOPT_CONNECTTIMEOUT, 120);
+				//we expect a response, so set the flag:
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				//set headers for json, consumer & secret
+				curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+					'Content-Type: application/json',
+				    'consumer: ' . $plagiarismsettings['vericite_accountid'],
+				    'consumerSecret: ' . $plagiarismsettings['vericite_secretkey']
+				    ));
+				//log headers
+				curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+				//				
+				curl_setopt($ch,CURLOPT_POST, true);
+				curl_setopt($ch,CURLOPT_POSTFIELDS, $fields_json);
+				plagiarism_vericite_log("Assignment update: url: \n" . $url . "\nfields: \n" . $fields_json);
+				//execute post
+				$resultJson = plagiarism_vericite_curl_exec($ch);      
             }
         } catch (Exception $e) {
             plagiarism_vericite_log("Attempted to save the assignment title and instructions.", $e);
@@ -541,19 +569,31 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     function plagiarism_vericite_get_scores($plagiarismsettings, $courseid, $cmid, $fileid, $userid) {
         global $DB;
         $score = -1;
-        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], $courseid, $cmid);
-        $fields = array();
-        $fields['consumer'] = $plagiarismsettings['vericite_accountid'];
-        $fields['consumerSecret'] = $plagiarismsettings['vericite_secretkey'];
-        plagiarism_vericite_log("VeriCite: looking up scores in VeriCite: url: " . $url . " ; fields: " . print_r($fields, true));
-        $c = new curl(array('proxy' => true));
-        $scores = json_decode($c->post($url, $fields));
-        plagiarism_vericite_log("VeriCite: score results: " . print_r($scores, true));
-
+        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_SCORES, $courseid);
+		$url .= "?assignmentId=" . $cmid;	
+		//create curl request
+		$ch = curl_init();
+		// set url
+		curl_setopt($ch, CURLOPT_URL, $url);
+		//set timeout in seconds:
+		curl_setopt($ch,CURLOPT_CONNECTTIMEOUT, 120);
+		//we expect a response, so set the flag:
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		//set headers for consumer & secret
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+		    'consumer: ' . $plagiarismsettings['vericite_accountid'],
+		    'consumerSecret: ' . $plagiarismsettings['vericite_secretkey']
+		    ));
+		//log headers
+		curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+		curl_setopt($ch, CURLOPT_HTTPGET, true);
+		//execute post
+        plagiarism_vericite_log("VeriCite: looking up scores in VeriCite: url: " . $url);
+		$scores = plagiarism_vericite_curl_exec($ch); 
         // Store results in the cache and set $score if you find the appropriate file score.
         $apiscores = array();
-        if (!empty($scores)) {
-            foreach ($scores as $resultuserid => $resultuserscores) {
+        if (!empty($scores) && isset($scores->scores)) {
+            foreach ($scores->scores as $resultuserid => $resultuserscores) {
                 foreach ($resultuserscores as $resultcmid => $resultcmidscores) {
                     foreach ($resultcmidscores as $resultcontentid => $resultcontentscore) {
                         $newelement = new object();
@@ -676,10 +716,20 @@ function plagiarism_vericite_ends_with($str, $test) {
     return substr_compare($str, $test, -strlen($test), strlen($test)) === 0;
 }
 
-function plagiarism_vericite_generate_url($url, $context, $assignment=null, $user=null) {
+function plagiarism_vericite_generate_url($url, $action, $context, $assignment=null, $user=null) {
     if (!plagiarism_vericite_ends_with($url, '/')) {
         $url .= '/';
     }
+	if(strcmp(PLAGIARISM_VERICITE_ACTION_ASSIGNMENTS, $action) == 0){
+		$url .= "assignments/";
+	}else if(strcmp(PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST, $action) == 0){
+		$url .= "reports/submit/request/";
+	}else if(strcmp(PLAGIARISM_VERICITE_ACTION_REPORTS_SCORES, $action) == 0){
+		$url .= "reports/scores/";
+	}else if(strcmp(PLAGIARISM_VERICITE_ACTION_REPORTS_URLS, $action) == 0){
+		$url .= "reports/urls/";
+	}
+		
     if (isset($context)) {
         $url = $url . $context . '/';
         if (isset($assignment)) {
@@ -691,3 +741,68 @@ function plagiarism_vericite_generate_url($url, $context, $assignment=null, $use
     }
     return $url;
 }
+
+function plagiarism_vericite_serialize_fields($fields){
+	$fields_string = '';
+	foreach($fields as $key=>$value) {
+		if (is_array($value)){
+			$fields_string .= $key .'=' . json_encode($value) . '&';
+		}else{
+			$fields_string .= $key .'=' . $value . '&';
+		}
+	}
+	$fields_string = rtrim($fields_string, '&');
+	return $fields_string;
+}
+
+function plagiarism_vericite_curl_exec($ch){
+	$result = null;
+	$attempts = 0;
+	$success = false;
+	do{
+		//execute post
+		$result = curl_exec($ch);
+		$responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		plagiarism_vericite_log(curl_getinfo($ch, CURLINFO_HEADER_OUT));
+		plagiarism_vericite_log("attempts: " . $attempts);
+		plagiarism_vericite_log("response code: " . $responseCode);
+       	plagiarism_vericite_log("result:\n" . $result);
+		if($result === FALSE || $responseCode != 200){
+			//make sure to return null so that the caller knows it failed
+			$result = null;
+			$success = false;
+		}else{
+			//a request could time out, check for a result message error
+			if(!empty($result) && substr($result, 0, 1) === "{"){
+				$result = json_decode($result);
+				if(isset($result->message) && strpos($result->message, "timed out") !== FALSE){
+					//The request endpoint timed out, let's call again
+					plagiarism_vericite_log("timed out");
+					$success = false;
+					$result = null;
+				}else{
+					plagiarism_vericite_log("success 1");
+					$success = true;
+					//make sure we return a non-empty result to show success
+					if(empty($result)){
+						$result = 1;
+					}
+				}
+			}else{
+				//no message is a good message :)
+				plagiarism_vericite_log("success 2");
+				$success = true;
+				//make sure we return a non-empty result to show success
+				if(empty($result)){
+					$result = 1;
+				}
+			}
+		}
+		$attempts++;
+	}while(!$success && $attempts < PLAGIARISM_VERICITE_REQUEST_ATTEMPTS);
+	//close connection
+	curl_close($ch);
+	return $result;
+}
+
+	

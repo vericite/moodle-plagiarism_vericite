@@ -18,4 +18,4 @@ $plugin->version =  2016012200;
 $plugin->requires = 2014051200;
 $plugin->component = 'plagiarism_vericite';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '4.0';
+$plugin->release = '5.0';
