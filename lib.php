@@ -279,8 +279,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 $dbtokens = $DB->get_records('plagiarism_vericite_tokens', $conditions);
                 foreach ($dbtokens as $dbtoken) {
                     plagiarism_vericite_log("VeriCite: db token: " . print_r($dbtoken, true));
-                    // Instructors can have multiple tokens, see if any of them aren't expired.
-                    // If it's not an instructor, there should only be one token in the array anyways.
                     if (time() - (60 * PLAGIARISM_VERICITE_TOKEN_CACHE_MIN) < $dbtoken->timeretrieved) {
                         // We found an existing token, set token and break out.
                         $token = $dbtoken->token;
@@ -301,8 +299,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         $fields['externalContentIDFilter'] = $fileid;
                         $fields['userIDFilter'] = $USER->id;
 						$fields['tokenUserRole'] = 'Learner';
-                        // Also make sure their token requires the context id, assignment id and user id
-                        $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], "", $COURSE->id, $vericite['cmid'], $USER->id);
                     } else {
                         // Send over the param for role so that instructors can see more details.
                         $fields['tokenUserRole'] = 'Instructor';
