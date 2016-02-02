@@ -66,6 +66,19 @@ function xmldb_plagiarism_vericite_upgrade($oldversion) {
         // Nothing to update.
         upgrade_plugin_savepoint(true, 2015021300, 'plagiarism', 'vericite');
     }
+	
+    if ($oldversion < 2016020200) {
+		//need to add tokenUser column in Token table
+        $table = new xmldb_table('plagiarism_vericite_tokens');
+        if ($dbman->table_exists($table)) {
+			$field1 = new xmldb_field('tokenuser', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'token');
+			if (!$dbman->field_exists($table, $field1)) {
+				$dbman->add_field($table, $field1);
+			}
+		}
+
+        upgrade_plugin_savepoint(true, 2016020200, 'plagiarism', 'vericite');
+    }
 
     return true;
 }

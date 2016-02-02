@@ -40,7 +40,8 @@
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="cm" NEXT="identifier"/>
         <FIELD NAME="identifier" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" PREVIOUS="userid" NEXT="timeretrieved"/>
 	<FIELD NAME="timeretrieved" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="identifier" NEXT="token"/>
-        <FIELD NAME="token" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="timeretrieved"/>
+        <FIELD NAME="token" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="timeretrieved"  NEXT="tokenUser"/>
+		<FIELD NAME="tokenuser" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="token"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="cm"/>

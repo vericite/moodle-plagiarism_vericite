@@ -274,7 +274,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $results['score'] = $score;
             if ($viewfullreport) {
                 // See if the token already exists.
-                $conditions = array('cm' => $vericite['cmid'], 'userid' => $USER->id, 'identifier' => $fileid);
+                $conditions = array('cm' => $vericite['cmid'], 'userid' => $vericite['userid'], 'tokenuser' => $USER->id, 'identifier' => $fileid);
                 plagiarism_vericite_log("VeriCite: looking for token: " . print_r($conditions, true));
                 $dbtokens = $DB->get_records('plagiarism_vericite_tokens', $conditions);
                 foreach ($dbtokens as $dbtoken) {
@@ -357,6 +357,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 									$newelement->identifier = $reportUrlLinkResponse->externalContentID;
 									$newelement->timeretrieved = time ();
 									$newelement->token = $reportUrlLinkResponse->url;
+									$newelement->tokenuser = $USER->id;
 									$DB->insert_record ('plagiarism_vericite_tokens', $newelement);
 								}
 							}
