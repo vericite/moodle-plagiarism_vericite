@@ -65,6 +65,7 @@ class send_files extends \core\task\scheduled_task {
                         mkdir($customdata['dataroot']."/plagiarism/", 0700);
                     }
                     $filepath = $customdata['dataroot'] . "/plagiarism/" . time() . $vericite['file']['filename'];
+					$uploadContentType = pathinfo($filepath, PATHINFO_EXTENSION);
                     $fh = fopen($filepath, 'w');
                     if (!empty($vericite['file']['type']) && $vericite['file']['type'] == "file") {
                         if (!empty($file->filepath)) {
@@ -77,8 +78,12 @@ class send_files extends \core\task\scheduled_task {
                     }
                     fclose($fh);
 					$externalContentData = array();
-					$externalContentData['uploadContentType'] = pathinfo($filepath, PATHINFO_EXTENSION);
-					$externalContentData['fileName'] = $vericite['file']['filename'];
+					$externalContentData['uploadContentType'] = $uploadContentType;
+					$filename = pathinfo($vericite['file']['filename'], PATHINFO_FILENAME);
+					if(empty($filename)){
+						$filename = $vericite['file']['filename'];
+					}
+					$externalContentData['fileName'] = $filename;
 					$externalContentData['externalContentID'] = $dbfile->identifier;
 					$externalContentData['uploadContentLength'] = filesize($filepath);
 					$reportMetaData['externalContentData'] = array($externalContentData);
@@ -129,6 +134,7 @@ class send_files extends \core\task\scheduled_task {
 				                        plagiarism_vericite_log("VeriCite: cron submit success.");
 				                    } else {
 				                        // Error of some sort, do not save.
+										plagiarism_vericite_log('failed to send file to VeriCite');
 				                        throw new \Exception('failed to send file to VeriCite');
 				                    }
 								}
@@ -137,6 +143,13 @@ class send_files extends \core\task\scheduled_task {
 					}
 					//delete temp file
                     unlink($filepath);
+					//check to see if the original request submit was not successful
+					if(empty($resultJson)){
+                        // Error of some sort, do not save.
+						plagiarism_vericite_log('failed to request submit file to VeriCite');
+                        throw new \Exception('failed to request submit file to VeriCite');
+					}
+					
                     // Now update the record to show we have retreived it.
                     $dbfile->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
                     $dbfile->data = "";
@@ -144,7 +157,7 @@ class send_files extends \core\task\scheduled_task {
                     // Clear cache scores so that the score will be looked up immediately.
                     $DB->execute("delete from {plagiarism_vericite_score} where cm = " . $dbfile->cm);
                 } catch (\Exception $e) {
-                    plagiarism_vericite_log("Cron Error", $e);
+                    plagiarism_vericite_log("Cron Error", $e->getMessage());
                     // Something unexpected happened, unlock this to try again later.
                     if ($dbfile->attempts < 500) {
                         $dbfile->status = PLAGIARISM_VERICITE_STATUS_SEND;

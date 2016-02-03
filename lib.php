@@ -76,7 +76,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         if (!empty($linkarray['content']) && trim($linkarray['content']) != false) {
             $file = array();
             $linkarray['content'] = '<html>' . $linkarray['content'] . '</html>';
-            $file['filename'] = "InlineSubmission";
+            $file['filename'] = "InlineSubmission.html";
             $file['type'] = "inline";
             $inlinepostfix = "";
             if (isset($plagiarismsettings['vericite_disable_dynamic_inline']) && $plagiarismsettings['vericite_disable_dynamic_inline']) {
@@ -422,6 +422,12 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 				if(isset($data->duedate)){
 					$assignmentData['assignmentDueDate'] = $data->duedate * 1000; //VeriCite expects the time to be in milliseconds
 				}
+				//pass in 0 to delete a grade, otherwise, set the grade
+				$grade = 0;
+				if(isset($data->grade) && $data->grade > 0){
+					$grade = $data->grade;
+				}
+				$assignmentData['assignmentGrade'] = $grade;
 				//TODO: attachments (introattachments)
 
 				$fields['assignmentData'] = $assignmentData;
@@ -772,7 +778,12 @@ function plagiarism_vericite_curl_exec($ch){
 			//a request could time out, check for a result message error
 			if(!empty($result) && substr($result, 0, 1) === "{"){
 				$result = json_decode($result);
-				if(isset($result->message) && strpos($result->message, "timed out") !== FALSE){
+				if(isset($result->errorMessage)){
+					//The request endpoint timed out, let's call again
+					plagiarism_vericite_log($result->errorMessage);
+					$success = false;
+					$result = null;					
+				}else if(isset($result->message) && strpos($result->message, "timed out") !== FALSE){
 					//The request endpoint timed out, let's call again
 					plagiarism_vericite_log("timed out");
 					$success = false;
@@ -797,6 +808,9 @@ function plagiarism_vericite_curl_exec($ch){
 		}
 		$attempts++;
 	}while(!$success && $attempts < PLAGIARISM_VERICITE_REQUEST_ATTEMPTS);
+	if($attempts >= PLAGIARISM_VERICITE_REQUEST_ATTEMPTS){
+		plagiarism_vericite_log("no more attempts");
+	}
 	//close connection
 	curl_close($ch);
 	return $result;
