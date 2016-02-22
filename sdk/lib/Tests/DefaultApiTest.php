@@ -76,6 +76,16 @@ class DefaultApiTest extends \PHPUnit_Framework_TestCase
     }
     
     /**
+     * Test case for adminConsumerNewConsumerKeyUpdatePut
+     *
+     * 
+     *
+     */
+    public function test_adminConsumerNewConsumerKeyUpdatePut() {
+
+    }
+    
+    /**
      * Test case for assignmentsContextIDAssignmentIDPost
      *
      * 

@@ -99,13 +99,13 @@ class DefaultApi
      * @param string $new_consumer_key Key for the new consumer (required)
      * @param string $consumer requesting consumer (required)
      * @param string $consumer_secret requesting consumer secret (required)
-     * @param \Swagger\Client\Model\ConsumerCreateData $consumer_create_data  (required)
-     * @return \Swagger\Client\Model\CreateConsumerResponse
+     * @param \Swagger\Client\Model\ConsumerData $consumer_data  (required)
+     * @return \Swagger\Client\Model\ConsumerResponse
      * @throws \Swagger\Client\ApiException on non-2xx response
      */
-    public function adminConsumerNewConsumerKeyCreatePost($new_consumer_key, $consumer, $consumer_secret, $consumer_create_data)
+    public function adminConsumerNewConsumerKeyCreatePost($new_consumer_key, $consumer, $consumer_secret, $consumer_data)
     {
-        list($response, $statusCode, $httpHeader) = $this->adminConsumerNewConsumerKeyCreatePostWithHttpInfo ($new_consumer_key, $consumer, $consumer_secret, $consumer_create_data);
+        list($response, $statusCode, $httpHeader) = $this->adminConsumerNewConsumerKeyCreatePostWithHttpInfo ($new_consumer_key, $consumer, $consumer_secret, $consumer_data);
         return $response; 
     }
 
@@ -118,11 +118,11 @@ class DefaultApi
      * @param string $new_consumer_key Key for the new consumer (required)
      * @param string $consumer requesting consumer (required)
      * @param string $consumer_secret requesting consumer secret (required)
-     * @param \Swagger\Client\Model\ConsumerCreateData $consumer_create_data  (required)
-     * @return Array of \Swagger\Client\Model\CreateConsumerResponse, HTTP status code, HTTP response headers (array of strings)
+     * @param \Swagger\Client\Model\ConsumerData $consumer_data  (required)
+     * @return Array of \Swagger\Client\Model\ConsumerResponse, HTTP status code, HTTP response headers (array of strings)
      * @throws \Swagger\Client\ApiException on non-2xx response
      */
-    public function adminConsumerNewConsumerKeyCreatePostWithHttpInfo($new_consumer_key, $consumer, $consumer_secret, $consumer_create_data)
+    public function adminConsumerNewConsumerKeyCreatePostWithHttpInfo($new_consumer_key, $consumer, $consumer_secret, $consumer_data)
     {
         
         // verify the required parameter 'new_consumer_key' is set
@@ -137,9 +137,9 @@ class DefaultApi
         if ($consumer_secret === null) {
             throw new \InvalidArgumentException('Missing the required parameter $consumer_secret when calling adminConsumerNewConsumerKeyCreatePost');
         }
-        // verify the required parameter 'consumer_create_data' is set
-        if ($consumer_create_data === null) {
-            throw new \InvalidArgumentException('Missing the required parameter $consumer_create_data when calling adminConsumerNewConsumerKeyCreatePost');
+        // verify the required parameter 'consumer_data' is set
+        if ($consumer_data === null) {
+            throw new \InvalidArgumentException('Missing the required parameter $consumer_data when calling adminConsumerNewConsumerKeyCreatePost');
         }
   
         // parse inputs
@@ -179,8 +179,8 @@ class DefaultApi
         
         // body params
         $_tempBody = null;
-        if (isset($consumer_create_data)) {
-            $_tempBody = $consumer_create_data;
+        if (isset($consumer_data)) {
+            $_tempBody = $consumer_data;
         }
   
         // for model (json/xml)
@@ -195,19 +195,160 @@ class DefaultApi
             list($response, $statusCode, $httpHeader) = $this->apiClient->callApi(
                 $resourcePath, 'POST',
                 $queryParams, $httpBody,
-                $headerParams, '\Swagger\Client\Model\CreateConsumerResponse'
+                $headerParams, '\Swagger\Client\Model\ConsumerResponse'
             );
             
             if (!$response) {
                 return array(null, $statusCode, $httpHeader);
             }
 
-            return array(\Swagger\Client\ObjectSerializer::deserialize($response, '\Swagger\Client\Model\CreateConsumerResponse', $httpHeader), $statusCode, $httpHeader);
+            return array(\Swagger\Client\ObjectSerializer::deserialize($response, '\Swagger\Client\Model\ConsumerResponse', $httpHeader), $statusCode, $httpHeader);
             
         } catch (ApiException $e) {
             switch ($e->getCode()) { 
             case 200:
-                $data = \Swagger\Client\ObjectSerializer::deserialize($e->getResponseBody(), '\Swagger\Client\Model\CreateConsumerResponse', $e->getResponseHeaders());
+                $data = \Swagger\Client\ObjectSerializer::deserialize($e->getResponseBody(), '\Swagger\Client\Model\ConsumerResponse', $e->getResponseHeaders());
+                $e->setResponseObject($data);
+                break;
+            case 400:
+                $data = \Swagger\Client\ObjectSerializer::deserialize($e->getResponseBody(), '\Swagger\Client\Model\Error', $e->getResponseHeaders());
+                $e->setResponseObject($data);
+                break;
+            case 401:
+                $data = \Swagger\Client\ObjectSerializer::deserialize($e->getResponseBody(), '\Swagger\Client\Model\Error', $e->getResponseHeaders());
+                $e->setResponseObject($data);
+                break;
+            case 500:
+                $data = \Swagger\Client\ObjectSerializer::deserialize($e->getResponseBody(), '\Swagger\Client\Model\Error', $e->getResponseHeaders());
+                $e->setResponseObject($data);
+                break;
+            default:
+                $data = \Swagger\Client\ObjectSerializer::deserialize($e->getResponseBody(), '\Swagger\Client\Model\Error', $e->getResponseHeaders());
+                $e->setResponseObject($data);
+                break;
+            }
+  
+            throw $e;
+        }
+    }
+    
+    /**
+     * adminConsumerNewConsumerKeyUpdatePut
+     *
+     * 
+     *
+     * @param string $new_consumer_key Key for the consumer to update (required)
+     * @param string $consumer requesting consumer (required)
+     * @param string $consumer_secret requesting consumer secret (required)
+     * @param \Swagger\Client\Model\ConsumerData $consumer_data  (required)
+     * @return \Swagger\Client\Model\ConsumerResponse
+     * @throws \Swagger\Client\ApiException on non-2xx response
+     */
+    public function adminConsumerNewConsumerKeyUpdatePut($new_consumer_key, $consumer, $consumer_secret, $consumer_data)
+    {
+        list($response, $statusCode, $httpHeader) = $this->adminConsumerNewConsumerKeyUpdatePutWithHttpInfo ($new_consumer_key, $consumer, $consumer_secret, $consumer_data);
+        return $response; 
+    }
+
+
+    /**
+     * adminConsumerNewConsumerKeyUpdatePutWithHttpInfo
+     *
+     * 
+     *
+     * @param string $new_consumer_key Key for the consumer to update (required)
+     * @param string $consumer requesting consumer (required)
+     * @param string $consumer_secret requesting consumer secret (required)
+     * @param \Swagger\Client\Model\ConsumerData $consumer_data  (required)
+     * @return Array of \Swagger\Client\Model\ConsumerResponse, HTTP status code, HTTP response headers (array of strings)
+     * @throws \Swagger\Client\ApiException on non-2xx response
+     */
+    public function adminConsumerNewConsumerKeyUpdatePutWithHttpInfo($new_consumer_key, $consumer, $consumer_secret, $consumer_data)
+    {
+        
+        // verify the required parameter 'new_consumer_key' is set
+        if ($new_consumer_key === null) {
+            throw new \InvalidArgumentException('Missing the required parameter $new_consumer_key when calling adminConsumerNewConsumerKeyUpdatePut');
+        }
+        // verify the required parameter 'consumer' is set
+        if ($consumer === null) {
+            throw new \InvalidArgumentException('Missing the required parameter $consumer when calling adminConsumerNewConsumerKeyUpdatePut');
+        }
+        // verify the required parameter 'consumer_secret' is set
+        if ($consumer_secret === null) {
+            throw new \InvalidArgumentException('Missing the required parameter $consumer_secret when calling adminConsumerNewConsumerKeyUpdatePut');
+        }
+        // verify the required parameter 'consumer_data' is set
+        if ($consumer_data === null) {
+            throw new \InvalidArgumentException('Missing the required parameter $consumer_data when calling adminConsumerNewConsumerKeyUpdatePut');
+        }
+  
+        // parse inputs
+        $resourcePath = "/admin/consumer/{newConsumerKey}/update";
+        $httpBody = '';
+        $queryParams = array();
+        $headerParams = array();
+        $formParams = array();
+        $_header_accept = ApiClient::selectHeaderAccept(array());
+        if (!is_null($_header_accept)) {
+            $headerParams['Accept'] = $_header_accept;
+        }
+        $headerParams['Content-Type'] = ApiClient::selectHeaderContentType(array());
+  
+        
+        // header params
+        
+        if ($consumer !== null) {
+            $headerParams['consumer'] = $this->apiClient->getSerializer()->toHeaderValue($consumer);
+        }// header params
+        
+        if ($consumer_secret !== null) {
+            $headerParams['consumerSecret'] = $this->apiClient->getSerializer()->toHeaderValue($consumer_secret);
+        }
+        // path params
+        
+        if ($new_consumer_key !== null) {
+            $resourcePath = str_replace(
+                "{" . "newConsumerKey" . "}",
+                $this->apiClient->getSerializer()->toPathValue($new_consumer_key),
+                $resourcePath
+            );
+        }
+        // default format to json
+        $resourcePath = str_replace("{format}", "json", $resourcePath);
+
+        
+        // body params
+        $_tempBody = null;
+        if (isset($consumer_data)) {
+            $_tempBody = $consumer_data;
+        }
+  
+        // for model (json/xml)
+        if (isset($_tempBody)) {
+            $httpBody = $_tempBody; // $_tempBody is the method argument, if present
+        } elseif (count($formParams) > 0) {
+            $httpBody = $formParams; // for HTTP post (form)
+        }
+        
+        // make the API Call
+        try {
+            list($response, $statusCode, $httpHeader) = $this->apiClient->callApi(
+                $resourcePath, 'PUT',
+                $queryParams, $httpBody,
+                $headerParams, '\Swagger\Client\Model\ConsumerResponse'
+            );
+            
+            if (!$response) {
+                return array(null, $statusCode, $httpHeader);
+            }
+
+            return array(\Swagger\Client\ObjectSerializer::deserialize($response, '\Swagger\Client\Model\ConsumerResponse', $httpHeader), $statusCode, $httpHeader);
+            
+        } catch (ApiException $e) {
+            switch ($e->getCode()) { 
+            case 200:
+                $data = \Swagger\Client\ObjectSerializer::deserialize($e->getResponseBody(), '\Swagger\Client\Model\ConsumerResponse', $e->getResponseHeaders());
                 $e->setResponseObject($data);
                 break;
             case 400:
@@ -674,7 +815,6 @@ class DefaultApi
             if (!$response) {
                 return array(null, $statusCode, $httpHeader);
             }
-           plagiarism_vericite_log("zz21: " . json_encode($response));
 
             return array(\Swagger\Client\ObjectSerializer::deserialize($response, '\Swagger\Client\Model\ExternalContentUploadInfo[]', $httpHeader), $statusCode, $httpHeader);
             

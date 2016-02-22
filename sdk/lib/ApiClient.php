@@ -175,9 +175,6 @@ class ApiClient
             $url = ($url . '?' . http_build_query($queryParams));
         }
 
-      plagiarism_vericite_log("zz19: $url");
-      plagiarism_vericite_log("zz20: $postData");
-
         if ($method == self::$POST) {
             curl_setopt($curl, CURLOPT_POST, true);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $postData);
