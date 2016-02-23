@@ -51,7 +51,10 @@ class ReportScoreReponse implements ArrayAccess
       * @var string[]
       */
     static $swaggerTypes = array(
-        'user' => 'string'
+        'user' => 'string',
+        'assignment' => 'string',
+        'external_content_id' => 'string',
+        'score' => 'int'
     );
   
     /** 
@@ -59,7 +62,10 @@ class ReportScoreReponse implements ArrayAccess
       * @var string[] 
       */
     static $attributeMap = array(
-        'user' => 'User'
+        'user' => 'User',
+        'assignment' => 'Assignment',
+        'external_content_id' => 'ExternalContentId',
+        'score' => 'Score'
     );
   
     /**
@@ -67,7 +73,10 @@ class ReportScoreReponse implements ArrayAccess
       * @var string[]
       */
     static $setters = array(
-        'user' => 'setUser'
+        'user' => 'setUser',
+        'assignment' => 'setAssignment',
+        'external_content_id' => 'setExternalContentId',
+        'score' => 'setScore'
     );
   
     /**
@@ -75,7 +84,10 @@ class ReportScoreReponse implements ArrayAccess
       * @var string[]
       */
     static $getters = array(
-        'user' => 'getUser'
+        'user' => 'getUser',
+        'assignment' => 'getAssignment',
+        'external_content_id' => 'getExternalContentId',
+        'score' => 'getScore'
     );
   
     
@@ -84,6 +96,24 @@ class ReportScoreReponse implements ArrayAccess
       * @var string
       */
     protected $user;
+    
+    /**
+      * $assignment 
+      * @var string
+      */
+    protected $assignment;
+    
+    /**
+      * $external_content_id 
+      * @var string
+      */
+    protected $external_content_id;
+    
+    /**
+      * $score 
+      * @var int
+      */
+    protected $score;
     
 
     /**
@@ -94,6 +124,9 @@ class ReportScoreReponse implements ArrayAccess
     {
         if ($data != null) {
             $this->user = $data["user"];
+            $this->assignment = $data["assignment"];
+            $this->external_content_id = $data["external_content_id"];
+            $this->score = $data["score"];
         }
     }
     
@@ -115,6 +148,69 @@ class ReportScoreReponse implements ArrayAccess
     {
         
         $this->user = $user;
+        return $this;
+    }
+    
+    /**
+     * Gets assignment
+     * @return string
+     */
+    public function getAssignment()
+    {
+        return $this->assignment;
+    }
+  
+    /**
+     * Sets assignment
+     * @param string $assignment 
+     * @return $this
+     */
+    public function setAssignment($assignment)
+    {
+        
+        $this->assignment = $assignment;
+        return $this;
+    }
+    
+    /**
+     * Gets external_content_id
+     * @return string
+     */
+    public function getExternalContentId()
+    {
+        return $this->external_content_id;
+    }
+  
+    /**
+     * Sets external_content_id
+     * @param string $external_content_id 
+     * @return $this
+     */
+    public function setExternalContentId($external_content_id)
+    {
+        
+        $this->external_content_id = $external_content_id;
+        return $this;
+    }
+    
+    /**
+     * Gets score
+     * @return int
+     */
+    public function getScore()
+    {
+        return $this->score;
+    }
+  
+    /**
+     * Sets score
+     * @param int $score 
+     * @return $this
+     */
+    public function setScore($score)
+    {
+        
+        $this->score = $score;
         return $this;
     }
     
