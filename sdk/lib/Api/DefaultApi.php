@@ -64,7 +64,7 @@ class DefaultApi
     {
         if ($apiClient == null) {
             $apiClient = new ApiClient();
-            $apiClient->getConfig()->setHost('https://localhost/v1');
+            $apiClient->getConfig()->setHost('https://stg-api.vericite.com/api/v1');
         }
   
         $this->apiClient = $apiClient;

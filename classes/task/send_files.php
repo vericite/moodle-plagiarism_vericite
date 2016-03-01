@@ -25,47 +25,36 @@ class send_files extends \core\task\scheduled_task {
         // Submit queued files.
         $dbfiles = $DB->get_records('plagiarism_vericite_files', array('status' => PLAGIARISM_VERICITE_STATUS_SEND), '', 'id, cm, userid, identifier, data, status, attempts');
         if (!empty($dbfiles)) {
-            $fileids = array();
             foreach ($dbfiles as $dbfile) {
-                // Lock DB records that will be worked on.
-                array_push($fileids, $dbfile->id);
-            }
-            list($dsql, $dparam) = $DB->get_in_or_equal($fileids);
-            // TODO: Oracle 1000 in clause limit
-            $DB->execute("update {plagiarism_vericite_files} set status = " . PLAGIARISM_VERICITE_STATUS_LOCKED . " where id " . $dsql, $dparam);
+                // Lock the record in the database.
+                $dbfile->status = PLAGIARISM_VERICITE_STATUS_LOCKED;
+                $DB->update_record('plagiarism_vericite_files', $dbfile);
 
-            foreach ($dbfiles as $dbfile) {
                 try {
                     $customdata = unserialize(base64_decode($dbfile->data));
                     $userid = $customdata['userid'];
                     $vericite = $customdata['vericite'];
+                    #$file = unserialize($customdata['file']);
                     if (!empty($customdata['file'])) {
                         $file = get_file_storage();
                         $file = unserialize($customdata['file']);
                     }
-                    $url = plagiarism_vericite_generate_url($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST, $customdata['courseid'], $customdata['cmid'], $userid);
-                    $fields = array();
-					$reportMetaData = array();
-                    if (!empty($customdata['userFirstName'])) {
-                        $reportMetaData['userFirstName'] = $customdata['userFirstName'];
-                    }
-                    if (!empty($customdata['userLastName'])) {
-                        $reportMetaData['userLastName'] = $customdata['userLastName'];
-                    }
-                    if (!empty($customdata['userEmail'])) {
-                        $reportMetaData['userEmail'] = $customdata['userEmail'];
-                    }
-                    $reportMetaData['userRole'] = $customdata['contentUserGradeAssignment'] ?  'Instructor' : 'Learner';
-                    if (isset($vericite['assignmentTitle'])) {
-                        $reportMetaData['assignmentTitle'] = $vericite['assignmentTitle'];
-                    }
-					
+
+                    $reportMetaData = array(
+                        'user_first_name' => !empty($customdata['userFirstName']) ? $customdata['userFirstName'] : '',
+                        'user_last_name' => !empty($customdata['userLastName']) ? $customdata['userLastName'] : '',
+                        'user_email' => !empty($customdata['userEmail']) ? $customdata['userEmail'] : '',
+                        'user_role' => $customdata['contentUserGradeAssignment'] ?  'Instructor' : 'Learner',
+                        'assignment_title' => !empty($customdata['assignmentTitle']) ? $customdata['assignmentTitle'] : 'TODO',
+                        'context_title' => !empty($vericite['courseTitle']) ? $vericite['courseTitle'] : '',
+                    );
+
                     // Create a tmp file to store data.
                     if (!check_dir_exists($customdata['dataroot']."/plagiarism/", true, true)) {
                         mkdir($customdata['dataroot']."/plagiarism/", 0700);
                     }
                     $filepath = $customdata['dataroot'] . "/plagiarism/" . time() . $vericite['file']['filename'];
-					$uploadContentType = pathinfo($filepath, PATHINFO_EXTENSION);
+                    $uploadContentType = pathinfo($filepath, PATHINFO_EXTENSION);
                     $fh = fopen($filepath, 'w');
                     if (!empty($vericite['file']['type']) && $vericite['file']['type'] == "file") {
                         if (!empty($file->filepath)) {
@@ -77,89 +66,68 @@ class send_files extends \core\task\scheduled_task {
                         fwrite($fh, $vericite['file']['content']);
                     }
                     fclose($fh);
+					
 					$externalContentData = array();
-					$externalContentData['uploadContentType'] = $uploadContentType;
+					$externalContentData['upload_content_type'] = pathinfo($vericite['file']['filename'], PATHINFO_EXTENSION);
 					$filename = pathinfo($vericite['file']['filename'], PATHINFO_FILENAME);
 					if(empty($filename)){
 						$filename = $vericite['file']['filename'];
 					}
-					$externalContentData['fileName'] = $filename;
-					$externalContentData['externalContentID'] = $dbfile->identifier;
-					$externalContentData['uploadContentLength'] = filesize($filepath);
-					$reportMetaData['externalContentData'] = array($externalContentData);
-					$fields['reportMetaData'] = $reportMetaData;
-					$fields_json = json_encode($fields);
-					//create curl request
-					$ch = curl_init();
-					// set url
-					curl_setopt($ch, CURLOPT_URL, $url);
-					//set timeout in seconds:
-					curl_setopt($ch,CURLOPT_CONNECTTIMEOUT, 120);
-					//we expect a response, so set the flag:
-					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-					//set headers for json, consumer & secret
-					curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-						'Content-Type: application/json',
-					    'consumer: ' . $plagiarismsettings['vericite_accountid'],
-					    'consumerSecret: ' . $plagiarismsettings['vericite_secretkey']
-					    ));
-					//log headers
-					curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-					curl_setopt($ch,CURLOPT_POST, true);
-					curl_setopt($ch,CURLOPT_POSTFIELDS, $fields_json);
-					
-			        plagiarism_vericite_log("url:\n" . $url . "\nfields:\n" . $fields_json);
-					$resultJson = plagiarism_vericite_curl_exec($ch);
-					if(!empty($resultJson)){
-						//now see if there are any presigned URLs we need to upload our attachment to:
-						if(isset($resultJson->externalContentUploadInfo)){
-							foreach($resultJson->externalContentUploadInfo as $externalContentUploadInfo){
-								if(isset($externalContentUploadInfo->urlPost)){
-									plagiarism_vericite_log("urlPost:\n" . $externalContentUploadInfo->urlPost . "\nfilepath:\n" . $filepath);
-									//create curl request
-									$ch = curl_init();
-									// set url
-									curl_setopt($ch, CURLOPT_URL, $externalContentUploadInfo->urlPost);
-									//upload file to this presigned URL
-									$fh_res = fopen($filepath, 'r');
-									curl_setopt($ch, CURLOPT_INFILE, $fh_res);
-									curl_setopt($ch, CURLOPT_INFILESIZE, filesize($filepath));									
-									//set timeout in seconds:
-									curl_setopt($ch,CURLOPT_CONNECTTIMEOUT, 120);
-									curl_setopt($ch,CURLOPT_PUT, 1);
-									curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-									$resultJson = plagiarism_vericite_curl_exec($ch);
-									if(!empty($resultJson)){
-				                        // Success: do nothing.
-				                        plagiarism_vericite_log("VeriCite: cron submit success.");
-				                    } else {
-				                        // Error of some sort, do not save.
-										plagiarism_vericite_log('failed to send file to VeriCite');
-				                        throw new \Exception('failed to send file to VeriCite');
-				                    }
-								}
-							}
-						}
-					}
-					//delete temp file
-                    unlink($filepath);
-					//check to see if the original request submit was not successful
-					if(empty($resultJson)){
+					$externalContentData['file_name'] = $filename;
+					$externalContentData['external_content_id'] = $dbfile->identifier;
+					$externalContentData['upload_content_length'] = filesize($filepath);
+					$reportMetaData['external_content_data'] = new \Swagger\Client\Model\ExternalContentData($externalContentData);
+                    $externalData = new \Swagger\Client\Model\ReportMetaData($reportMetaData);
+
+                    $api = new \Swagger\Client\Api\DefaultApi();
+                    $resultJson = $api->reportsSubmitRequestContextIDAssignmentIDUserIDPost($customdata['courseid'], $customdata['cmid'], $userid, $plagiarismsettings['vericite_accountid'], $plagiarismsettings['vericite_secretkey'], $externalData);
+
+                    // Check to see if the original request submit was not successful.
+                    if(empty($resultJson)){
                         // Error of some sort, do not save.
-						plagiarism_vericite_log('failed to request submit file to VeriCite');
+                        plagiarism_vericite_log('VeriCite returns empty result, maybe they want us to check back later.');
                         throw new \Exception('failed to request submit file to VeriCite');
-					}
+                    }
+
+                    if(!empty($resultJson) && is_array($resultJson)) {
+                        foreach ($resultJson AS $externalcontentuploadinfo) {
+                            // Now see if there are any presigned URLs we need to upload our attachment to.
+                            if($externalcontentuploadinfo) {
+                                plagiarism_vericite_log("urlPost:\n" . $externalcontentuploadinfo->getUrlPost() . "\nfilepath: " . $filepath);
+                                $ch = curl_init();
+                                curl_setopt($ch, CURLOPT_URL, $externalcontentuploadinfo->getUrlPost());
+                                $fh_res = fopen($filepath, 'r');
+                                curl_setopt($ch, CURLOPT_INFILE, $fh_res);
+                                curl_setopt($ch, CURLOPT_INFILESIZE, filesize($filepath));
+                                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
+                                curl_setopt($ch, CURLOPT_PUT, 1);
+                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                                $curl_result = curl_exec($ch);
+                                $responseCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                                fclose($fh_res);
+
+                                if($responseCode === 200) {
+                                    // Success: do nothing.
+                                    plagiarism_vericite_log("VeriCite: cron submit success.");
+                                } else {
+                                    // Error of some sort, do not save.
+                                    plagiarism_vericite_log('failed to send file to VeriCite');
+                                    throw new \Exception('Failed to send file to VeriCite pre-signed URL');
+                                }
+                            }
+                        }
+                    }
 					
                     // Now update the record to show we have retreived it.
                     $dbfile->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
                     $dbfile->data = "";
                     $DB->update_record('plagiarism_vericite_files', $dbfile);
                     // Clear cache scores so that the score will be looked up immediately.
-                    $DB->execute("delete from {plagiarism_vericite_score} where cm = " . $dbfile->cm);
+                    $DB->delete_records('plagiarism_vericite_score', array('cm' => $dbfile->cm));
                 } catch (\Exception $e) {
-                    plagiarism_vericite_log("Cron Error", $e->getMessage());
+                    plagiarism_vericite_log("Cron Error: " . $e->getMessage(), $e);
                     // Something unexpected happened, unlock this to try again later.
-                    if ($dbfile->attempts < 500) {
+                    if ($dbfile->attempts < 100) {
                         $dbfile->status = PLAGIARISM_VERICITE_STATUS_SEND;
                         $dbfile->attempts = $dbfile->attempts + 1;
                     } else {
@@ -171,7 +139,6 @@ class send_files extends \core\task\scheduled_task {
         }
 
         // Delete old tokens:
-        $DB->execute("delete from {plagiarism_vericite_tokens} where timeretrieved < " . (time() - (60 * PLAGIARISM_VERICITE_TOKEN_CACHE_MIN)));
-
+        $DB->delete_records_select('plagiarism_vericite_tokens', 'timeretrieved < ?', array(time() - (60 * PLAGIARISM_VERICITE_TOKEN_CACHE_MIN)));
     }
 }
