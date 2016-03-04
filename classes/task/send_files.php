@@ -58,7 +58,6 @@ class send_files extends \core\task\scheduled_task {
                         mkdir($customdata['dataroot']."/plagiarism/", 0700);
                     }
                     $filepath = $customdata['dataroot'] . "/plagiarism/" . time() . $vericite['file']['filename'];
-                    $uploadContentType = pathinfo($filepath, PATHINFO_EXTENSION);
                     $fh = fopen($filepath, 'w');
                     if (!empty($vericite['file']['type']) && $vericite['file']['type'] == "file") {
                         if (!empty($file->filepath)) {
@@ -92,12 +91,7 @@ class send_files extends \core\task\scheduled_task {
 					
 					$result = plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST, $apiArgs);
 
-                    // Check to see if the original request submit was not successful.
-                    if(empty($result)){
-                        // Error of some sort, do not save.
-                        plagiarism_vericite_log('VeriCite returns empty result, maybe they want us to check back later.');
-                        throw new \Exception('failed to request submit file to VeriCite');
-                    }else if(is_array($result)) {
+					if(!empty($result) && is_array($result)){
                         foreach ($result AS $externalcontentuploadinfo) {
                             // Now see if there are any presigned URLs we need to upload our attachment to.
                             if($externalcontentuploadinfo) {
@@ -124,6 +118,12 @@ class send_files extends \core\task\scheduled_task {
                     }
 					//delete temp file
                     unlink($filepath);
+                    // Check to see if the original request submit was not successful.
+                    if(empty($result)){
+                        // Error of some sort, do not save.
+                        plagiarism_vericite_log('VeriCite returns empty result, maybe they want us to check back later.');
+                        throw new \Exception('failed to request submit file to VeriCite');
+                    }
 
                     // Now update the record to show we have retreived it.
                     $dbfile->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
