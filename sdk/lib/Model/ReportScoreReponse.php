@@ -62,10 +62,10 @@ class ReportScoreReponse implements ArrayAccess
       * @var string[] 
       */
     static $attributeMap = array(
-        'user' => 'User',
-        'assignment' => 'Assignment',
-        'external_content_id' => 'ExternalContentId',
-        'score' => 'Score'
+        'user' => 'user',
+        'assignment' => 'assignment',
+        'external_content_id' => 'externalContentId',
+        'score' => 'score'
     );
   
     /**
