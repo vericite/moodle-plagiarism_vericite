@@ -66,8 +66,20 @@ function xmldb_plagiarism_vericite_upgrade($oldversion) {
         // Nothing to update.
         upgrade_plugin_savepoint(true, 2015021300, 'plagiarism', 'vericite');
     }
+
+    if($oldversion < 2016012600){
+        $table = new xmldb_table('plagiarism_vericite_files');
+  	if ($dbman->table_exists($table)) {
+  		$field1 = new xmldb_field('timesubmitted', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, null, null, '0', 'attempts');
+  		if (!$dbman->field_exists($table, $field1)) {
+  			$dbman->add_field($table, $field1);
+  		}
+  	}
+  	
+  	upgrade_plugin_savepoint(true, 2016012600, 'plagiarism', 'vericite');
+    }
 	
-    if ($oldversion < 2016020200) {
+    if ($oldversion < 2016021900) {
 		//need to add tokenUser column in Token table
         $table = new xmldb_table('plagiarism_vericite_tokens');
         if ($dbman->table_exists($table)) {
@@ -77,7 +89,7 @@ function xmldb_plagiarism_vericite_upgrade($oldversion) {
 			}
 		}
 
-        upgrade_plugin_savepoint(true, 2016020200, 'plagiarism', 'vericite');
+        upgrade_plugin_savepoint(true, 2016021900, 'plagiarism', 'vericite');
     }
 
     return true;
