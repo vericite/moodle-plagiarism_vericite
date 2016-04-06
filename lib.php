@@ -635,6 +635,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 }
 
 function plagiarism_vericite_log($logstring, $e=null) {
+    $plagiarismsettings = plagiarism_vericite_get_settings();
     if (!empty($plagiarismsettings['vericite_enable_debugging']) && $plagiarismsettings['vericite_enable_debugging']) {
         global $CFG;
         $logfile = $CFG->dataroot.'/vericite.log';
