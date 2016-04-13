@@ -75,10 +75,10 @@ function xmldb_plagiarism_vericite_upgrade($oldversion) {
   			$dbman->add_field($table, $field1);
   		}
   	}
-  	
+
   	upgrade_plugin_savepoint(true, 2016012600, 'plagiarism', 'vericite');
     }
-	
+
     if ($oldversion < 2016021900) {
 		//need to add tokenUser column in Token table
         $table = new xmldb_table('plagiarism_vericite_tokens');
@@ -87,6 +87,13 @@ function xmldb_plagiarism_vericite_upgrade($oldversion) {
 			if (!$dbman->field_exists($table, $field1)) {
 				$dbman->add_field($table, $field1);
 			}
+      //change API url to new url
+      $vcApi = $DB->get_record('config_plugins', array('plugin' => 'plagiarism', 'name' => 'vericite_api'));
+      if($vcApi){
+        $vcApi->value = "https://api.vericite.com/lms/";
+        $DB->update_record('config_plugins', $vcApi);
+      }
+
 		}
 
         upgrade_plugin_savepoint(true, 2016021900, 'plagiarism', 'vericite');
