@@ -57,7 +57,7 @@ class plagiarism_setup_form extends moodleform {
 
         $mform->addElement('checkbox', 'vericite_use_default', get_string('usevericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_use_default', 'usevericite', 'plagiarism_vericite');
-        
+
         $mform->addElement('checkbox', 'vericite_student_score_default', get_string('studentscorevericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_student_score_default', 'studentscorevericite', 'plagiarism_vericite');
         $mform->setDefault('vericite_student_score_default', true);
@@ -69,6 +69,14 @@ class plagiarism_setup_form extends moodleform {
         $mform->addElement('checkbox', 'vericite_exclude_quotes_default', get_string('excludequotesvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_exclude_quotes_default', 'excludequotesvericite', 'plagiarism_vericite');
         $mform->setDefault('vericite_exclude_quotes_default', true);
+
+        $mform->addElement('checkbox', 'vericite_exclude_self_plag_default', get_string('excludeselfplagvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_exclude_self_plag_default', 'excludeselfplagvericite', 'plagiarism_vericite');
+        $mform->setDefault('vericite_exclude_self_plag_default', true);
+
+        $mform->addElement('checkbox', 'vericite_store_inst_index_default', get_string('storeinstindexvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_store_inst_index_default', 'storeinstindexvericite', 'plagiarism_vericite');
+        $mform->setDefault('vericite_store_inst_index_default', true);
 
         $mform->addElement('html', get_string('vericitedefaultsettingsforums', 'plagiarism_vericite') . "<br/>");
 
@@ -83,6 +91,14 @@ class plagiarism_setup_form extends moodleform {
         $mform->addElement('checkbox', 'vericite_exclude_quotes_default_forums', get_string('excludequotesvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_exclude_quotes_default_forums', 'excludequotesvericite', 'plagiarism_vericite');
         $mform->setDefault('vericite_exclude_quotes_default_forums', true);
+
+        $mform->addElement('checkbox', 'vericite_exclude_self_plag_default_forums', get_string('excludeselfplagvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_exclude_self_plag_default_forums', 'excludeselfplagvericite', 'plagiarism_vericite');
+        $mform->setDefault('vericite_exclude_self_plag_default_forums', true);
+
+        $mform->addElement('checkbox', 'vericite_store_inst_index_default_forums', get_string('storeinstindexvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_store_inst_index_default_forums', 'storeinstindexvericite', 'plagiarism_vericite');
+        $mform->setDefault('vericite_store_inst_index_default_forums', true);
 
         $this->add_action_buttons(true);
     }

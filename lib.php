@@ -52,10 +52,10 @@ define('PLAGIARISM_VERICITE_API_VERSION', "v1");
 class plagiarism_plugin_vericite extends plagiarism_plugin {
 
     /**
-     * hook to allow plagiarism specific information to be displayed beside a submission 
+     * hook to allow plagiarism specific information to be displayed beside a submission
      * @param array  $linkarraycontains all relevant information for the plugin to generate a link
      * @return string
-     * 
+     *
      */
     public function get_links($linkarray) {
         global $COURSE;
@@ -146,7 +146,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             return false;
         }
 
-        plagiarism_vericite_log("VeriCite: get_file_results: cmid: " . $cmid . ", userId: " . $userid . ", file: " . print_r($file, true)); 
+        plagiarism_vericite_log("VeriCite: get_file_results: cmid: " . $cmid . ", userId: " . $userid . ", file: " . print_r($file, true));
         $plagiarismvalues = $DB->get_records_menu('plagiarism_vericite_config', array('cm' => $vericite['cmid']), '', 'name,value');
         if (empty($plagiarismvalues['use_vericite'])) {
             plagiarism_vericite_log("VeriCite: not in use for this cm");
@@ -199,7 +199,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					//don't consult the cache until at least PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN after submission
 					plagiarism_vericite_log("don't consult cache");
 					//recheck after PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK minutes instead of the normal cache time
-					$cacheTime = 60 * PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK; 
+					$cacheTime = 60 * PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK;
 				}
 				plagiarism_vericite_log("cacheTime: " . $cacheTime . " , " . time() . " - " . $mycontent->timesubmitted . " = " . (time() - $mycontent->timesubmitted));
                 plagiarism_vericite_log("VeriCite: content: " . print_r($mycontent, true));
@@ -336,7 +336,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         		if ($dbtoken->identifier == $reportUrlLinkResponse->getExternalContentId()) {
                             		// We found an existing score in the db, update it.
                             		$id = $dbtoken->id;
-                        		
+
 									// This is a matched db item from the query above,
 									// so we should update the token id and time no matter what.
 									$dbtoken->token = $reportUrlLinkResponse->getUrl();
@@ -407,28 +407,30 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         // Now save the assignment title and instructrions and files (not a big deal if this fails, so wrap in try catch).
         try {
-            $plagiarismsettings = plagiarism_vericite_get_settings();
-            if ($plagiarismsettings && !empty($data->use_vericite)) {
-                $apiArgs = array();
-				$apiArgs['context_id'] = $data->course;
-				$apiArgs['assignment_id'] = $data->coursemodule;
-				$apiArgs['consumer'] = $plagiarismsettings['vericite_accountid'];
-				$apiArgs['consumer_secret'] = $plagiarismsettings['vericite_secretkey'];
-                $assignmentinfo = array();				
-                $assignmentinfo['assignment_title'] = $data->name;
-                $assignmentinfo['assignment_instructions'] = $data->intro;
-                $assignmentinfo['assignment_exclude_quotes'] = !empty($data->plagiarism_exclude_quotes) ? true : false;
-                $assignmentinfo['assignment_due_date'] = isset($data->duedate) ? $data->duedate * 1000 : '';  //VeriCite expects the time to be in milliseconds
-                // Pass in 0 to delete a grade, otherwise, set the grade.
-                $assignmentinfo['assignment_grade'] = !empty($data->grade) ? $data->grade : 0;
-			    //TODO: attachments (introattachments)
-				// $assignmentinfo['assignment_attachment_external_content'] = new \Swagger\Client\Model\ExternalContentData(array('file_name' => 'myfilename', 'upload_content_type' => 'uploadtype', 'upload_content_length' => 123456, 'external_content_id' => 44444));
-				$assignmentinfo['assignment_attachment_external_content'] = null;
-				$assignmentdata = new \Swagger\Client\Model\AssignmentData($assignmentinfo);
-				plagiarism_vericite_log("assignment info: " . serialize($assignmentinfo));
-				$apiArgs['assignment_data'] = $assignmentdata;
-				plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_ASSIGNMENTS, $apiArgs);
-            }
+          $plagiarismsettings = plagiarism_vericite_get_settings();
+          if ($plagiarismsettings && !empty($data->use_vericite)) {
+            $apiArgs = array();
+            $apiArgs['context_id'] = $data->course;
+            $apiArgs['assignment_id'] = $data->coursemodule;
+            $apiArgs['consumer'] = $plagiarismsettings['vericite_accountid'];
+            $apiArgs['consumer_secret'] = $plagiarismsettings['vericite_secretkey'];
+            $assignmentinfo = array();
+            $assignmentinfo['assignment_title'] = $data->name;
+            $assignmentinfo['assignment_instructions'] = $data->intro;
+            $assignmentinfo['assignment_exclude_quotes'] = !empty($data->plagiarism_exclude_quotes) ? true : false;
+            $assignmentinfo['assignment_exclude_self_plag'] = !empty($data->plagiarism_exclude_self_plag) ? true : false;
+            $assignmentinfo['assignment_store_in_index'] = !empty($data->plagiarism_store_inst_index) ? true : false;
+            $assignmentinfo['assignment_due_date'] = isset($data->duedate) ? $data->duedate * 1000 : '';  //VeriCite expects the time to be in milliseconds
+            // Pass in 0 to delete a grade, otherwise, set the grade.
+            $assignmentinfo['assignment_grade'] = !empty($data->grade) ? $data->grade : 0;
+            //TODO: attachments (introattachments)
+            // $assignmentinfo['assignment_attachment_external_content'] = new \Swagger\Client\Model\ExternalContentData(array('file_name' => 'myfilename', 'upload_content_type' => 'uploadtype', 'upload_content_length' => 123456, 'external_content_id' => 44444));
+            $assignmentinfo['assignment_attachment_external_content'] = null;
+            $assignmentdata = new \Swagger\Client\Model\AssignmentData($assignmentinfo);
+            plagiarism_vericite_log("assignment info: " . serialize($assignmentinfo));
+            $apiArgs['assignment_data'] = $assignmentdata;
+            plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_ASSIGNMENTS, $apiArgs);
+          }
         } catch (Exception $e) {
             plagiarism_vericite_log("Attempted to save the assignment title and instructions.", $e);
         }
@@ -485,11 +487,10 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $mform->setDefault('plagiarism_show_student_report', $plagiarismsettings['vericite_student_report_default_forums']);
         }
 
+        // Exclude Quotes
         $mform->addElement('checkbox', 'plagiarism_exclude_quotes', get_string("excludequotesvericite", "plagiarism_vericite"));
-        $mform->addHelpButton('plagiarism_exclude_quotes', 'excludequotesassignment', 'plagiarism_vericite');
+        $mform->addHelpButton('plagiarism_exclude_quotes', 'excludequotesvericite', 'plagiarism_vericite');
         $mform->disabledIf('plagiarism_exclude_quotes', 'use_vericite');
-        $mform->setDefault('vericite_student_score_default', true);
-
         // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
         if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_exclude_quotes'])) {
             $mform->setDefault('plagiarism_exclude_quotes', $plagiarismvalues['plagiarism_exclude_quotes']);
@@ -498,10 +499,40 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_exclude_quotes_default_forums'])) {
             $mform->setDefault('plagiarism_exclude_quotes', $plagiarismsettings['vericite_exclude_quotes_default_forums']);
         }
+
+        // Exclude Self Plag
+        $mform->addElement('checkbox', 'plagiarism_exclude_self_plag', get_string("excludeselfplagvericite", "plagiarism_vericite"));
+        $mform->addHelpButton('plagiarism_exclude_self_plag', 'excludeselfplagvericite', 'plagiarism_vericite');
+        $mform->disabledIf('plagiarism_exclude_self_plag', 'use_vericite');
+        // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
+        if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_exclude_self_plag'])) {
+            $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismvalues['plagiarism_exclude_self_plag']);
+        } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_exclude_self_plag_default'])) {
+            $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismsettings['vericite_exclude_self_plag_default']);
+        } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_exclude_self_plag_default_forums'])) {
+            $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismsettings['vericite_exclude_self_plag_default_forums']);
+        }
+
+        // Store in Inst Index
+        $mform->addElement('checkbox', 'plagiarism_store_inst_index', get_string("storeinstindexvericite", "plagiarism_vericite"));
+        $mform->addHelpButton('plagiarism_store_inst_index', 'storeinstindexvericite', 'plagiarism_vericite');
+        $mform->disabledIf('plagiarism_store_inst_index', 'use_vericite');
+        // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
+        if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_store_inst_index'])) {
+            $mform->setDefault('plagiarism_store_inst_index', $plagiarismvalues['plagiarism_store_inst_index']);
+        } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_store_inst_index_default'])) {
+            $mform->setDefault('plagiarism_store_inst_index', $plagiarismsettings['vericite_store_inst_index_default']);
+        } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_store_inst_index_default_forums'])) {
+            $mform->setDefault('plagiarism_store_inst_index', $plagiarismsettings['vericite_store_inst_index_default_forums']);
+        }
+
+        $mform->setDefault('vericite_student_score_default', true);
+
+
     }
 
     public function config_options() {
-        return array('use_vericite', 'plagiarism_show_student_score', 'plagiarism_show_student_report', 'plagiarism_exclude_quotes');
+        return array('use_vericite', 'plagiarism_show_student_score', 'plagiarism_show_student_report', 'plagiarism_exclude_quotes', 'plagiarism_exclude_self_plag', 'plagiarism_store_inst_index');
     }
 
     /**
@@ -535,9 +566,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
     public function update_status($course, $cm) {
         // Called at top of submissions/grading pages - allows printing of admin style links or updating status
     }
-	
+
 	/**
-	 * called by admin/cron.php 
+	 * called by admin/cron.php
 	 *
 	 */
 	public function cron() {
@@ -699,7 +730,7 @@ function plagiarism_vericite_call_api($hostUrl, $action, $args){
 					break;
 				case PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST:
 					$result = $api->reportsSubmitRequestContextIDAssignmentIDUserIDPost($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data']);
-					break;			
+					break;
 				case PLAGIARISM_VERICITE_ACTION_REPORTS_SCORES:
 					$result = $api->reportsScoresContextIDGet($args['context_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_id'], $args['user_id'], $args['external_content_id']);
 					break;
@@ -757,7 +788,7 @@ function plagiarism_vericite_curl_exec($ch){
 					//The request endpoint timed out, let's call again
 					plagiarism_vericite_log($result->errorMessage);
 					$success = false;
-					$result = null;					
+					$result = null;
 				}else if(isset($result->message) && strpos($result->message, "timed out") !== FALSE){
 					//The request endpoint timed out, let's call again
 					plagiarism_vericite_log("timed out");
@@ -790,5 +821,3 @@ function plagiarism_vericite_curl_exec($ch){
 	curl_close($ch);
 	return $result;
 }
-
-
