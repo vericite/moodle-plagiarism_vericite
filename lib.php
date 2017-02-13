@@ -123,17 +123,29 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         if (array_key_exists('error', $results)) {
             return $results['error'];
         }
+
         $rank = $this->plagiarism_vericite_get_css_rank($results['score']);
 
         $similaritystring = '&nbsp;<span class="' . $rank . '">' . $results['score'] . '%</span>';
+
+        //Show Report and/or Score if allowed.
         if (!empty($results['reporturl'])) {
             // User gets to see link to similarity report & similarity score
-            $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
-            $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
-        } else {
-            // User only sees similarity score
+            if(($results['viewFullReport'] && $results['viewSimilarityScore']) || $results['isInstructor']) {
+                $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
+                $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
+            } else if($results['viewFullReport'] && !$results['viewSimilarityScore']) {
+                $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
+                $output .= get_string('similarity', 'plagiarism_vericite').'</a></span>';
+            } else if(!$results['viewFullReport'] && $results['viewSimilarityScore']) {
+                $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite').':' . $similaritystring . '</span>';
+            } else {
+                //Not able to view report or score...
+            }
+        } else if($results['viewSimilarityScore'] || $results['isInstructor']) {
             $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
         }
+
         return "<br/>" . $output . "<br/>";
     }
 
@@ -182,7 +194,11 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 'analyzed' =>  0,
                 'score' => '',
                 'reporturl' => '',
+                'viewSimilarityScore' => $viewsimilarityscore,
+                'viewFullReport' => $viewfullreport,
+                'isInstructor' => $gradeassignment,
         );
+
 
         // First check if we already have looked up the score for this class.
         $fileid = $vericite['file']['identifier'];
