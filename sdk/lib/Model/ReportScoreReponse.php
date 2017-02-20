@@ -69,7 +69,8 @@ class ReportScoreReponse implements ArrayAccess
         'user' => 'string',
         'assignment' => 'string',
         'external_content_id' => 'string',
-        'score' => 'int'
+        'preliminary' => 'bool',
+        'score' => 'int',
     );
 
     public static function swaggerTypes()
@@ -85,7 +86,8 @@ class ReportScoreReponse implements ArrayAccess
         'user' => 'user',
         'assignment' => 'assignment',
         'external_content_id' => 'externalContentId',
-        'score' => 'score'
+        'preliminary' => 'preliminary',
+        'score' => 'score',
     );
 
     public static function attributeMap()
@@ -101,7 +103,8 @@ class ReportScoreReponse implements ArrayAccess
         'user' => 'setUser',
         'assignment' => 'setAssignment',
         'external_content_id' => 'setExternalContentId',
-        'score' => 'setScore'
+        'preliminary' => 'setPreliminary',
+        'score' => 'setScore',
     );
 
     public static function setters()
@@ -117,7 +120,8 @@ class ReportScoreReponse implements ArrayAccess
         'user' => 'getUser',
         'assignment' => 'getAssignment',
         'external_content_id' => 'getExternalContentId',
-        'score' => 'getScore'
+        'preliminary' => 'getPreliminary',
+        'score' => 'getScore',
     );
 
     public static function getters()
@@ -144,6 +148,7 @@ class ReportScoreReponse implements ArrayAccess
         $this->container['user'] = isset($data['user']) ? $data['user'] : null;
         $this->container['assignment'] = isset($data['assignment']) ? $data['assignment'] : null;
         $this->container['external_content_id'] = isset($data['external_content_id']) ? $data['external_content_id'] : null;
+        $this->container['preliminary'] = isset($data['preliminary']) ? $data['preliminary'] : null;
         $this->container['score'] = isset($data['score']) ? $data['score'] : null;
     }
 
@@ -229,6 +234,27 @@ class ReportScoreReponse implements ArrayAccess
     public function setExternalContentId($external_content_id)
     {
         $this->container['external_content_id'] = $external_content_id;
+
+        return $this;
+    }
+
+    /**
+     * Gets preliminary
+     * @return bool
+     */
+    public function getPreliminary()
+    {
+        return $this->container['preliminary'];
+    }
+
+    /**
+     * Sets preliminary
+     * @param bool $preliminary
+     * @return $this
+     */
+    public function setPreliminary($preliminary)
+    {
+        $this->container['preliminary'] = $preliminary;
 
         return $this;
     }

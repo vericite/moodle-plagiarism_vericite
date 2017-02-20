@@ -53,19 +53,34 @@ class plagiarism_setup_form extends moodleform {
         $mform->addElement('checkbox', 'vericite_enable_debugging', get_string('enable_debugging', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_enable_debugging', 'enable_debugging', 'plagiarism_vericite');
 
+        //show a preliminary score
+        $mform->addElement('checkbox', 'vericite_preliminary_report', get_string('preliminaryreportvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_preliminary_report', 'preliminaryreportvericite', 'plagiarism_vericite');
+        $mform->setDefault('vericite_preliminary_report', true);
+
+        //Default settings for new assignments
         $mform->addElement('html', get_string('vericitedefaultsettings', 'plagiarism_vericite') . "<br/>");
 
+        //enable VC
         $mform->addElement('checkbox', 'vericite_use_default', get_string('usevericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_use_default', 'usevericite', 'plagiarism_vericite');
 
+        //students to view score
         $mform->addElement('checkbox', 'vericite_student_score_default', get_string('studentscorevericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_student_score_default', 'studentscorevericite', 'plagiarism_vericite');
         $mform->setDefault('vericite_student_score_default', true);
 
+        //students to view report
         $mform->addElement('checkbox', 'vericite_student_report_default', get_string('studentreportvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_student_report_default', 'studentreportvericite', 'plagiarism_vericite');
         $mform->setDefault('vericite_student_report_default', true);
 
+        //students to view report
+        $mform->addElement('checkbox', 'vericite_student_report_default', get_string('studentreportvericite', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_student_report_default', 'studentreportvericite', 'plagiarism_vericite');
+        $mform->setDefault('vericite_student_report_default', true);
+
+        //exclude quotes
         $mform->addElement('checkbox', 'vericite_exclude_quotes_default', get_string('excludequotesvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_exclude_quotes_default', 'excludequotesvericite', 'plagiarism_vericite');
         $mform->setDefault('vericite_exclude_quotes_default', true);
@@ -75,6 +90,7 @@ class plagiarism_setup_form extends moodleform {
         $mform->addHelpButton('vericite_exclude_quotes_default_hideinstructor', 'excludequotesvericite_hideinstructor', 'plagiarism_vericite');
         $mform->setDefault('vericite_exclude_quotes_default_hideinstructor', false);
 
+        //exclude self plagiarism
         $mform->addElement('checkbox', 'vericite_exclude_self_plag_default', get_string('excludeselfplagvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_exclude_self_plag_default', 'excludeselfplagvericite', 'plagiarism_vericite');
         $mform->setDefault('vericite_exclude_self_plag_default', true);
@@ -84,6 +100,7 @@ class plagiarism_setup_form extends moodleform {
         $mform->addHelpButton('vericite_exclude_self_plag_default_hideinstructor', 'excludeselfplagvericite_hideinstructor', 'plagiarism_vericite');
         $mform->setDefault('vericite_exclude_self_plag_default_hideinstructor', false);
 
+        //Store in Institutional Index
         $mform->addElement('checkbox', 'vericite_store_inst_index_default', get_string('storeinstindexvericite', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_store_inst_index_default', 'storeinstindexvericite', 'plagiarism_vericite');
         $mform->setDefault('vericite_store_inst_index_default', true);
@@ -92,7 +109,8 @@ class plagiarism_setup_form extends moodleform {
         $mform->addElement('checkbox', 'vericite_store_inst_index_default_hideinstructor', get_string('storeinstindexvericite_hideinstructor', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_store_inst_index_default_hideinstructor', 'storeinstindexvericite_hideinstructor', 'plagiarism_vericite');
         $mform->setDefault('vericite_store_inst_index_default_hideinstructor', false);
-        
+
+        //Default settings for Forums
         $mform->addElement('html', get_string('vericitedefaultsettingsforums', 'plagiarism_vericite') . "<br/>");
 
         $mform->addElement('checkbox', 'vericite_student_score_default_forums', get_string('studentscorevericite', 'plagiarism_vericite'));

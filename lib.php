@@ -46,6 +46,7 @@ define('PLAGIARISM_VERICITE_REQUEST_ATTEMPTS', 4);
 define('PLAGIARISM_VERICITE_SCORE_CACHE_MIN', 30); //after PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN of submission, use this cache time
 define('PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN', 60); //do not consult the cache until X minutes after the initial submission
 define('PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK', 3); //within PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN of submission, use this cache time
+define('PLAGIARISM_VERICITE_SCORE_CACHE_PRELIMINARY_IGNORE_MIN', 5);  //preliminary scores to be rechecked soon
 define('PLAGIARISM_VERICITE_API_VERSION', "v1");
 
 
@@ -128,22 +129,24 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         $similaritystring = '&nbsp;<span class="' . $rank . '">' . $results['score'] . '%</span>';
 
-        //Show Report and/or Score if allowed.
-        if (!empty($results['reporturl'])) {
-            // User gets to see link to similarity report & similarity score
-            if(($results['viewFullReport'] && $results['viewSimilarityScore']) || $results['isInstructor']) {
-                $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
-                $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
-            } else if($results['viewFullReport'] && !$results['viewSimilarityScore']) {
-                $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
-                $output .= get_string('similarity', 'plagiarism_vericite').'</a></span>';
-            } else if(!$results['viewFullReport'] && $results['viewSimilarityScore']) {
-                $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite').':' . $similaritystring . '</span>';
-            } else {
-                //Not able to view report or score...
+        if(!($results['isPreliminary'] == 1 && $results['viewPreliminaryReport'] == 0)) {
+            //Show Report and/or Score if allowed.
+            if (!empty($results['reporturl'])) {
+                // User gets to see link to similarity report & similarity score
+                if(($results['viewFullReport'] && $results['viewSimilarityScore']) || $results['isInstructor']) {
+                    $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
+                    $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
+                } else if($results['viewFullReport'] && !$results['viewSimilarityScore']) {
+                    $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
+                    $output .= get_string('similarity', 'plagiarism_vericite').'</a></span>';
+                } else if(!$results['viewFullReport'] && $results['viewSimilarityScore']) {
+                    $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite').':' . $similaritystring . '</span>';
+                } else {
+                    //Not able to view report or score...
+                }
+            } else if($results['viewSimilarityScore'] || $results['isInstructor']) {
+                $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
             }
-        } else if($results['viewSimilarityScore'] || $results['isInstructor']) {
-            $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
         }
 
         return "<br/>" . $output . "<br/>";
@@ -190,6 +193,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             return false;
         }
 
+        $viewPreliminaryReport = $plagiarismsettings['vericite_preliminary_report'];
+
         $results = array(
                 'analyzed' =>  0,
                 'score' => '',
@@ -197,6 +202,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 'viewSimilarityScore' => $viewsimilarityscore,
                 'viewFullReport' => $viewfullreport,
                 'isInstructor' => $gradeassignment,
+                'viewPreliminaryReport' => $viewPreliminaryReport,
         );
 
 
@@ -206,7 +212,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		//do not consult the cache if the timesubmitted is less than PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN
 		$cacheTime = 60 * PLAGIARISM_VERICITE_SCORE_CACHE_MIN;
         $mycontent = null;
-        $contentscore = $DB->get_records('plagiarism_vericite_files', array('cm' => $vericite['cmid'], 'userid' => $userid, 'identifier' => $fileid), '', 'id,cm,userid,identifier,similarityscore, timeretrieved, status, timesubmitted');
+        $contentscore = $DB->get_records('plagiarism_vericite_files', array('cm' => $vericite['cmid'], 'userid' => $userid, 'identifier' => $fileid), '', 'id,cm,userid,identifier,similarityscore,preliminary,timeretrieved, status, timesubmitted');
         if (!empty($contentscore)) {
 			//there should only be 1 result
             foreach ($contentscore as $content) {
@@ -217,6 +223,14 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					//recheck after PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK minutes instead of the normal cache time
 					$cacheTime = 60 * PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK;
 				}
+
+                $results['isPreliminary'] = $mycontent->preliminary;
+
+                if($mycontent->preliminary==1) {
+                    $cacheTime = 60 * PLAGIARISM_VERICITE_SCORE_CACHE_PRELIMINARY_IGNORE_MIN;
+                }
+
+
 				plagiarism_vericite_log("cacheTime: " . $cacheTime . " , " . time() . " - " . $mycontent->timesubmitted . " = " . (time() - $mycontent->timesubmitted));
                 plagiarism_vericite_log("VeriCite: content: " . print_r($mycontent, true));
                 if ($content->status == PLAGIARISM_VERICITE_STATUS_SUCCESS && (time() - $cacheTime) < $content->timeretrieved) {
@@ -683,6 +697,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 $newelement->userid = $reportscoreresponse->getUser();
                 $newelement->identifier = $reportscoreresponse->getExternalContentId();
                 $newelement->similarityscore = $reportscoreresponse->getScore();
+                $newelement->preliminary = $reportscoreresponse->getPreliminary();
                 $newelement->timeretrieved = time();
                 $newelement->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
                 $newelement->data = '';
@@ -697,8 +712,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         if (count($apiscores) > 0) {
             // We found some scores, let's update the DB.
-            $dbscores = $DB->get_records('plagiarism_vericite_files', array('cm' => $cmid), '', 'id, cm, userid, identifier, similarityscore, timeretrieved');
-            $sql = "INSERT INTO {plagiarism_vericite_files} (id, cm, userid, identifier, similarityscore, timeretrieved, data, status) VALUES ";
+            $dbscores = $DB->get_records('plagiarism_vericite_files', array('cm' => $cmid), '', 'id, cm, userid, identifier, similarityscore, preliminary, timeretrieved');
+            $sql = "INSERT INTO {plagiarism_vericite_files} (id, cm, userid, identifier, similarityscore, preliminary, timeretrieved, data, status) VALUES ";
             $executequery = false;
             foreach ($apiscores as $apiscore) {
                 foreach ($dbscores as $dbscore) {
@@ -717,13 +732,13 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                     $executequery = true;
                 }
                 $id = (empty($apiscore->id)) ? "null" : $apiscore->id;
-                $sql .= "($id,$apiscore->cm,$apiscore->userid,'$apiscore->identifier',$apiscore->similarityscore,$apiscore->timeretrieved,'$apiscore->data',$apiscore->status)";
+                $sql .= "($id,$apiscore->cm,$apiscore->userid,'$apiscore->identifier',$apiscore->similarityscore,$apiscore->preliminary,$apiscore->timeretrieved,'$apiscore->data',$apiscore->status)";
             }
 
             if ($executequery) {
                 try {
                     // TODO: Create an Oracle version of this query.
-                    $sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), timeretrieved=VALUES(timeretrieved), status=VALUES(status), data=VALUE(data)";
+                    $sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), preliminary=VALUES(preliminary, timeretrieved=VALUES(timeretrieved), status=VALUES(status), data=VALUE(data)";
                     $DB->execute($sql);
                 } catch (Exception $e) {
                     // The fancy bulk update query didn't work, so fall back to one update at a time.

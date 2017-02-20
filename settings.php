@@ -48,6 +48,9 @@ if (($data = $mform->get_data()) && confirm_sesskey()) {
     if (!isset($data->vericite_use_default)) {
         $data->vericite_use_default = 0;
     }
+    if (!isset($data->vericite_preliminary_report)) {
+        $data->vericite_preliminary_report = 0;
+    }
     if (!isset($data->vericite_student_score_default)) {
         $data->vericite_student_score_default = 0;
     }
