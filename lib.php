@@ -254,8 +254,11 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
 	        if (empty($scorecache) || $scorecache->timeretrieved < time() - $cacheTime) {
 	            // We couldn't find the score in the cache, try to look it up with the webservice.
-	            $score = $this->plagiarism_vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileid, $userid);
-
+	            $scoreElement = $this->plagiarism_vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileid, $userid);
+              if($scoreElement != null){
+                $score = $scoreElement->similarityscore;
+                $results['isPreliminary'] = $scoreElement->preliminary;
+              }
 	            // Update score DB table with the current fetch time.
 	            if (empty($scorecache)) {
 	                $scorecacheelement = new StdClass();
@@ -678,7 +681,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
     function plagiarism_vericite_get_scores($plagiarismsettings, $courseid, $cmid, $fileid, $userid) {
         global $DB;
-        $score = -1;
+        $scoreElement = null;
 		$apiArgs = array();
 		$apiArgs['context_id'] = $courseid;
 		$apiArgs['consumer'] = $plagiarismsettings['vericite_accountid'];
@@ -705,7 +708,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 if ($newelement->identifier == $fileid && $newelement->userid == $userid) {
                     // We found this file's score, so set it.
 					plagiarism_vericite_log("score found");
-                    $score = $newelement->similarityscore;
+                    $scoreElement = $newelement;
                 }
             }
         }
@@ -754,7 +757,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         }
 
-        return $score;
+        return $scoreElement;
     }
 
     private function plagiarism_vericite_get_css_rank ($score) {
