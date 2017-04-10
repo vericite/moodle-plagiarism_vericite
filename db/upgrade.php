@@ -104,5 +104,23 @@ function xmldb_plagiarism_vericite_upgrade($oldversion) {
       upgrade_plugin_savepoint(true, 2016082900, 'plagiarism', 'vericite');
     }
 
+    if($oldversion < 2017021000){
+        // Nothing to update.
+        upgrade_plugin_savepoint(true, 2017021000, 'plagiarism', 'vericite');
+    }
+
+    if($oldversion < 2017021600){
+        //need to add preliminary column in files table
+        $table = new xmldb_table('plagiarism_vericite_files');
+        if ($dbman->table_exists($table)) {
+            $field = new xmldb_field('preliminary', XMLDB_TYPE_INTEGER, '2', XMLDB_UNSIGNED, null, null, null, 'similarityscore');
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2017021600, 'plagiarism', 'vericite');
+    }
+
     return true;
 }

@@ -46,6 +46,7 @@ define('PLAGIARISM_VERICITE_REQUEST_ATTEMPTS', 4);
 define('PLAGIARISM_VERICITE_SCORE_CACHE_MIN', 30); //after PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN of submission, use this cache time
 define('PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN', 60); //do not consult the cache until X minutes after the initial submission
 define('PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK', 3); //within PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN of submission, use this cache time
+define('PLAGIARISM_VERICITE_SCORE_CACHE_PRELIMINARY_IGNORE_MIN', 5);  //preliminary scores to be rechecked soon
 define('PLAGIARISM_VERICITE_API_VERSION', "v1");
 
 
@@ -123,17 +124,31 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         if (array_key_exists('error', $results)) {
             return $results['error'];
         }
+
         $rank = $this->plagiarism_vericite_get_css_rank($results['score']);
 
         $similaritystring = '&nbsp;<span class="' . $rank . '">' . $results['score'] . '%</span>';
-        if (!empty($results['reporturl'])) {
-            // User gets to see link to similarity report & similarity score
-            $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
-            $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
-        } else {
-            // User only sees similarity score
-            $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
+
+        if(!($results['isPreliminary'] == 1 && $results['viewPreliminaryReport'] == 0)) {
+            //Show Report and/or Score if allowed.
+            if (!empty($results['reporturl'])) {
+                // User gets to see link to similarity report & similarity score
+                if(($results['viewFullReport'] && $results['viewSimilarityScore']) || $results['isInstructor']) {
+                    $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
+                    $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
+                } else if($results['viewFullReport'] && !$results['viewSimilarityScore']) {
+                    $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
+                    $output .= get_string('similarity', 'plagiarism_vericite').'</a></span>';
+                } else if(!$results['viewFullReport'] && $results['viewSimilarityScore']) {
+                    $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite').':' . $similaritystring . '</span>';
+                } else {
+                    //Not able to view report or score...
+                }
+            } else if($results['viewSimilarityScore'] || $results['isInstructor']) {
+                $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite') . $similaritystring . '</span>';
+            }
         }
+
         return "<br/>" . $output . "<br/>";
     }
 
@@ -178,11 +193,18 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             return false;
         }
 
+        $viewPreliminaryReport = $plagiarismsettings['vericite_preliminary_report'];
+
         $results = array(
                 'analyzed' =>  0,
                 'score' => '',
                 'reporturl' => '',
+                'viewSimilarityScore' => $viewsimilarityscore,
+                'viewFullReport' => $viewfullreport,
+                'isInstructor' => $gradeassignment,
+                'viewPreliminaryReport' => $viewPreliminaryReport,
         );
+
 
         // First check if we already have looked up the score for this class.
         $fileid = $vericite['file']['identifier'];
@@ -190,7 +212,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 		//do not consult the cache if the timesubmitted is less than PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN
 		$cacheTime = 60 * PLAGIARISM_VERICITE_SCORE_CACHE_MIN;
         $mycontent = null;
-        $contentscore = $DB->get_records('plagiarism_vericite_files', array('cm' => $vericite['cmid'], 'userid' => $userid, 'identifier' => $fileid), '', 'id,cm,userid,identifier,similarityscore, timeretrieved, status, timesubmitted');
+        $contentscore = $DB->get_records('plagiarism_vericite_files', array('cm' => $vericite['cmid'], 'userid' => $userid, 'identifier' => $fileid), '', 'id,cm,userid,identifier,similarityscore,preliminary,timeretrieved, status, timesubmitted');
         if (!empty($contentscore)) {
 			//there should only be 1 result
             foreach ($contentscore as $content) {
@@ -201,6 +223,14 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 					//recheck after PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK minutes instead of the normal cache time
 					$cacheTime = 60 * PLAGIARISM_VERICITE_SCORE_CACHE_IGNORE_MIN_RECHECK;
 				}
+
+                $results['isPreliminary'] = $mycontent->preliminary;
+
+                if($mycontent->preliminary==1) {
+                    $cacheTime = 60 * PLAGIARISM_VERICITE_SCORE_CACHE_PRELIMINARY_IGNORE_MIN;
+                }
+
+
 				plagiarism_vericite_log("cacheTime: " . $cacheTime . " , " . time() . " - " . $mycontent->timesubmitted . " = " . (time() - $mycontent->timesubmitted));
                 plagiarism_vericite_log("VeriCite: content: " . print_r($mycontent, true));
                 if ($content->status == PLAGIARISM_VERICITE_STATUS_SUCCESS && (time() - $cacheTime) < $content->timeretrieved) {
@@ -224,8 +254,11 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
 	        if (empty($scorecache) || $scorecache->timeretrieved < time() - $cacheTime) {
 	            // We couldn't find the score in the cache, try to look it up with the webservice.
-	            $score = $this->plagiarism_vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileid, $userid);
-
+	            $scoreElement = $this->plagiarism_vericite_get_scores($plagiarismsettings, $COURSE->id, $cmid, $fileid, $userid);
+              if($scoreElement != null){
+                $score = $scoreElement->similarityscore;
+                $results['isPreliminary'] = $scoreElement->preliminary;
+              }
 	            // Update score DB table with the current fetch time.
 	            if (empty($scorecache)) {
 	                $scorecacheelement = new StdClass();
@@ -390,6 +423,62 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $data->use_vericite = 0;
         }
 
+        $plagiarismsettings = plagiarism_vericite_get_settings();
+        if ($plagiarismsettings && !empty($data->use_vericite)) {
+
+            // Set values for settings that were hidden from instructor, but set in plugin settings
+            if (strcmp("assign", $data->modulename) == 0) {
+                if ($plagiarismsettings['vericite_exclude_quotes_default_hideinstructor'] == 1) {
+                    if($plagiarismsettings['vericite_exclude_quotes_default'] == 1) {
+                        $data->plagiarism_exclude_quotes = $plagiarismsettings['vericite_exclude_quotes_default'];
+                    } else {
+                        unset($data->plagiarism_exclude_quotes);
+                    }
+                }
+
+                if ($plagiarismsettings['vericite_exclude_self_plag_default_hideinstructor'] == 1) {
+                    if($plagiarismsettings['vericite_exclude_self_plag_default'] == 1) {
+                        $data->plagiarism_exclude_self_plag = $plagiarismsettings['vericite_exclude_self_plag_default'];
+                    } else {
+                        unset($data->plagiarism_exclude_self_plag);
+                    }
+                }
+
+                if ($plagiarismsettings['vericite_store_inst_index_default_hideinstructor'] == 1) {
+                    if($plagiarismsettings['vericite_store_inst_index_default'] == 1) {
+                        $data->plagiarism_store_inst_index = $plagiarismsettings['vericite_store_inst_index_default'];
+                    } else {
+                        unset($data->plagiarism_store_inst_index);
+                    }
+                }
+
+            } else if (strcmp("forum", $data->modulename) == 0) {
+                if ($plagiarismsettings['vericite_exclude_quotes_default_forums_hideinstructor'] == 1) {
+                    if($plagiarismsettings['vericite_exclude_quotes_default_forums'] == 1) {
+                        $data->plagiarism_exclude_quotes = $plagiarismsettings['vericite_exclude_quotes_default_forums'];
+                    } else {
+                        unset($data->plagiarism_exclude_quotes);
+                    }
+                }
+
+                if ($plagiarismsettings['vericite_exclude_self_plag_default_forums_hideinstructor'] == 1) {
+                    if($plagiarismsettings['vericite_exclude_self_plag_default_forums'] == 1) {
+                        $data->plagiarism_exclude_self_plag = $plagiarismsettings['vericite_exclude_self_plag_default_forums'];
+                    } else {
+                        unset($data->plagiarism_exclude_self_plag);
+                    }
+                }
+
+                if ($plagiarismsettings['vericite_store_inst_index_default_forums_hideinstructor'] == 1) {
+                    if($plagiarismsettings['vericite_store_inst_index_default_forums'] == 1) {
+                        $data->plagiarism_store_inst_index = $plagiarismsettings['vericite_store_inst_index_default_forums'];
+                    } else {
+                        unset($data->plagiarism_store_inst_index);
+                    }
+                }
+            }
+        }
+
         $existingelements = $DB->get_records_menu('plagiarism_vericite_config', array('cm' => $data->coursemodule), '', 'name,id');
         foreach ($plagiarismelements as $element) {
             $newelement = new StdClass();
@@ -417,9 +506,11 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             $assignmentinfo = array();
             $assignmentinfo['assignment_title'] = $data->name;
             $assignmentinfo['assignment_instructions'] = $data->intro;
-            $assignmentinfo['assignment_exclude_quotes'] = !empty($data->plagiarism_exclude_quotes) ? true : false;
-            $assignmentinfo['assignment_exclude_self_plag'] = !empty($data->plagiarism_exclude_self_plag) ? true : false;
-            $assignmentinfo['assignment_store_in_index'] = !empty($data->plagiarism_store_inst_index) ? true : false;
+
+            $assignmentinfo['assignment_exclude_quotes'] = (!empty($data->plagiarism_exclude_quotes) && $data->plagiarism_exclude_quotes == 1) ? true : false;
+            $assignmentinfo['assignment_exclude_self_plag'] = (!empty($data->plagiarism_exclude_self_plag) && $data->plagiarism_exclude_self_plag == 1) ? true : false;
+            $assignmentinfo['assignment_store_in_index'] = (!empty($data->plagiarism_store_inst_index) && $data->plagiarism_store_inst_index == 1) ? true : false;
+
             $assignmentinfo['assignment_due_date'] = isset($data->duedate) ? $data->duedate * 1000 : '';  //VeriCite expects the time to be in milliseconds
             // Pass in 0 to delete a grade, otherwise, set the grade.
             $assignmentinfo['assignment_grade'] = !empty($data->grade) ? $data->grade : 0;
@@ -488,46 +579,60 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         }
 
         // Exclude Quotes
-        $mform->addElement('checkbox', 'plagiarism_exclude_quotes', get_string("excludequotesvericite", "plagiarism_vericite"));
-        $mform->addHelpButton('plagiarism_exclude_quotes', 'excludequotesvericite', 'plagiarism_vericite');
-        $mform->disabledIf('plagiarism_exclude_quotes', 'use_vericite');
-        // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
-        if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_exclude_quotes'])) {
-            $mform->setDefault('plagiarism_exclude_quotes', $plagiarismvalues['plagiarism_exclude_quotes']);
-        } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_exclude_quotes_default'])) {
-            $mform->setDefault('plagiarism_exclude_quotes', $plagiarismsettings['vericite_exclude_quotes_default']);
-        } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_exclude_quotes_default_forums'])) {
-            $mform->setDefault('plagiarism_exclude_quotes', $plagiarismsettings['vericite_exclude_quotes_default_forums']);
+        if(!(
+            (strcmp("mod_assign", $modulename) == 0 && $plagiarismsettings['vericite_exclude_quotes_default_hideinstructor'] == 1) ||
+            (strcmp("mod_forum", $modulename) == 0  && $plagiarismsettings['vericite_exclude_quotes_default_forums_hideinstructor'] == 1)
+        )) {
+            $mform->addElement('checkbox', 'plagiarism_exclude_quotes', get_string("excludequotesvericite", "plagiarism_vericite"));
+            $mform->addHelpButton('plagiarism_exclude_quotes', 'excludequotesvericite', 'plagiarism_vericite');
+            $mform->disabledIf('plagiarism_exclude_quotes', 'use_vericite');
+            // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
+            if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_exclude_quotes'])) {
+                $mform->setDefault('plagiarism_exclude_quotes', $plagiarismvalues['plagiarism_exclude_quotes']);
+            } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_exclude_quotes_default'])) {
+                $mform->setDefault('plagiarism_exclude_quotes', $plagiarismsettings['vericite_exclude_quotes_default']);
+            } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_exclude_quotes_default_forums'])) {
+                $mform->setDefault('plagiarism_exclude_quotes', $plagiarismsettings['vericite_exclude_quotes_default_forums']);
+            }
         }
 
         // Exclude Self Plag
-        $mform->addElement('checkbox', 'plagiarism_exclude_self_plag', get_string("excludeselfplagvericite", "plagiarism_vericite"));
-        $mform->addHelpButton('plagiarism_exclude_self_plag', 'excludeselfplagvericite', 'plagiarism_vericite');
-        $mform->disabledIf('plagiarism_exclude_self_plag', 'use_vericite');
-        // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
-        if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_exclude_self_plag'])) {
-            $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismvalues['plagiarism_exclude_self_plag']);
-        } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_exclude_self_plag_default'])) {
-            $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismsettings['vericite_exclude_self_plag_default']);
-        } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_exclude_self_plag_default_forums'])) {
-            $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismsettings['vericite_exclude_self_plag_default_forums']);
+        if(!(
+            (strcmp("mod_assign", $modulename) == 0 && $plagiarismsettings['vericite_exclude_self_plag_default_hideinstructor'] == 1) ||
+            (strcmp("mod_forum", $modulename) == 0  && $plagiarismsettings['vericite_exclude_self_plag_default_forums_hideinstructor'] == 1)
+        )) {
+            $mform->addElement('checkbox', 'plagiarism_exclude_self_plag', get_string("excludeselfplagvericite", "plagiarism_vericite"));
+            $mform->addHelpButton('plagiarism_exclude_self_plag', 'excludeselfplagvericite', 'plagiarism_vericite');
+            $mform->disabledIf('plagiarism_exclude_self_plag', 'use_vericite');
+            // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
+            if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_exclude_self_plag'])) {
+                $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismvalues['plagiarism_exclude_self_plag']);
+            } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_exclude_self_plag_default'])) {
+                $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismsettings['vericite_exclude_self_plag_default']);
+            } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_exclude_self_plag_default_forums'])) {
+                $mform->setDefault('plagiarism_exclude_self_plag', $plagiarismsettings['vericite_exclude_self_plag_default_forums']);
+            }
         }
 
         // Store in Inst Index
-        $mform->addElement('checkbox', 'plagiarism_store_inst_index', get_string("storeinstindexvericite", "plagiarism_vericite"));
-        $mform->addHelpButton('plagiarism_store_inst_index', 'storeinstindexvericite', 'plagiarism_vericite');
-        $mform->disabledIf('plagiarism_store_inst_index', 'use_vericite');
-        // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
-        if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_store_inst_index'])) {
-            $mform->setDefault('plagiarism_store_inst_index', $plagiarismvalues['plagiarism_store_inst_index']);
-        } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_store_inst_index_default'])) {
-            $mform->setDefault('plagiarism_store_inst_index', $plagiarismsettings['vericite_store_inst_index_default']);
-        } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_store_inst_index_default_forums'])) {
-            $mform->setDefault('plagiarism_store_inst_index', $plagiarismsettings['vericite_store_inst_index_default_forums']);
+        if(!(
+            (strcmp("mod_assign", $modulename) == 0 && $plagiarismsettings['vericite_store_inst_index_default_hideinstructor'] == 1) ||
+            (strcmp("mod_forum", $modulename) == 0  && $plagiarismsettings['vericite_store_inst_index_default_forums_hideinstructor'] == 1)
+        )) {
+            $mform->addElement('checkbox', 'plagiarism_store_inst_index', get_string("storeinstindexvericite", "plagiarism_vericite"));
+            $mform->addHelpButton('plagiarism_store_inst_index', 'storeinstindexvericite', 'plagiarism_vericite');
+            $mform->disabledIf('plagiarism_store_inst_index', 'use_vericite');
+            // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
+            if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_store_inst_index'])) {
+                $mform->setDefault('plagiarism_store_inst_index', $plagiarismvalues['plagiarism_store_inst_index']);
+            } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_store_inst_index_default'])) {
+                $mform->setDefault('plagiarism_store_inst_index', $plagiarismsettings['vericite_store_inst_index_default']);
+            } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_store_inst_index_default_forums'])) {
+                $mform->setDefault('plagiarism_store_inst_index', $plagiarismsettings['vericite_store_inst_index_default_forums']);
+            }
+
+            $mform->setDefault('vericite_student_score_default', true);
         }
-
-        $mform->setDefault('vericite_student_score_default', true);
-
 
     }
 
@@ -576,7 +681,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
     function plagiarism_vericite_get_scores($plagiarismsettings, $courseid, $cmid, $fileid, $userid) {
         global $DB;
-        $score = -1;
+        $scoreElement = null;
 		$apiArgs = array();
 		$apiArgs['context_id'] = $courseid;
 		$apiArgs['consumer'] = $plagiarismsettings['vericite_accountid'];
@@ -595,6 +700,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 $newelement->userid = $reportscoreresponse->getUser();
                 $newelement->identifier = $reportscoreresponse->getExternalContentId();
                 $newelement->similarityscore = $reportscoreresponse->getScore();
+                $newelement->preliminary = $reportscoreresponse->getPreliminary();
                 $newelement->timeretrieved = time();
                 $newelement->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
                 $newelement->data = '';
@@ -602,15 +708,15 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 if ($newelement->identifier == $fileid && $newelement->userid == $userid) {
                     // We found this file's score, so set it.
 					plagiarism_vericite_log("score found");
-                    $score = $newelement->similarityscore;
+                    $scoreElement = $newelement;
                 }
             }
         }
 
         if (count($apiscores) > 0) {
             // We found some scores, let's update the DB.
-            $dbscores = $DB->get_records('plagiarism_vericite_files', array('cm' => $cmid), '', 'id, cm, userid, identifier, similarityscore, timeretrieved');
-            $sql = "INSERT INTO {plagiarism_vericite_files} (id, cm, userid, identifier, similarityscore, timeretrieved, data, status) VALUES ";
+            $dbscores = $DB->get_records('plagiarism_vericite_files', array('cm' => $cmid), '', 'id, cm, userid, identifier, similarityscore, preliminary, timeretrieved');
+            $sql = "INSERT INTO {plagiarism_vericite_files} (id, cm, userid, identifier, similarityscore, preliminary, timeretrieved, data, status) VALUES ";
             $executequery = false;
             foreach ($apiscores as $apiscore) {
                 foreach ($dbscores as $dbscore) {
@@ -629,13 +735,13 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                     $executequery = true;
                 }
                 $id = (empty($apiscore->id)) ? "null" : $apiscore->id;
-                $sql .= "($id,$apiscore->cm,$apiscore->userid,'$apiscore->identifier',$apiscore->similarityscore,$apiscore->timeretrieved,'$apiscore->data',$apiscore->status)";
+                $sql .= "($id,$apiscore->cm,$apiscore->userid,'$apiscore->identifier',$apiscore->similarityscore,$apiscore->preliminary,$apiscore->timeretrieved,'$apiscore->data',$apiscore->status)";
             }
 
             if ($executequery) {
                 try {
                     // TODO: Create an Oracle version of this query.
-                    $sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), timeretrieved=VALUES(timeretrieved), status=VALUES(status), data=VALUE(data)";
+                    $sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), preliminary=VALUES(preliminary, timeretrieved=VALUES(timeretrieved), status=VALUES(status), data=VALUE(data)";
                     $DB->execute($sql);
                 } catch (Exception $e) {
                     // The fancy bulk update query didn't work, so fall back to one update at a time.
@@ -651,7 +757,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         }
 
-        return $score;
+        return $scoreElement;
     }
 
     private function plagiarism_vericite_get_css_rank ($score) {

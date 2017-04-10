@@ -48,6 +48,9 @@ if (($data = $mform->get_data()) && confirm_sesskey()) {
     if (!isset($data->vericite_use_default)) {
         $data->vericite_use_default = 0;
     }
+    if (!isset($data->vericite_preliminary_report)) {
+        $data->vericite_preliminary_report = 0;
+    }
     if (!isset($data->vericite_student_score_default)) {
         $data->vericite_student_score_default = 0;
     }
@@ -57,11 +60,20 @@ if (($data = $mform->get_data()) && confirm_sesskey()) {
     if (!isset($data->vericite_exclude_quotes_default)) {
         $data->vericite_exclude_quotes_default = 0;
     }
+    if (!isset($data->vericite_exclude_quotes_default_hideinstructor)) {
+        $data->vericite_exclude_quotes_default_hideinstructor = 0;
+    }
     if (!isset($data->vericite_exclude_self_plag_default)) {
         $data->vericite_exclude_self_plag_default = 0;
     }
+    if (!isset($data->vericite_exclude_self_plag_default_hideinstructor)) {
+        $data->vericite_exclude_self_plag_default_hideinstructor = 0;
+    }
     if (!isset($data->vericite_store_inst_index_default)) {
         $data->vericite_store_inst_index_default = 0;
+    }
+    if (!isset($data->vericite_store_inst_index_default_hideinstructor)) {
+        $data->vericite_store_inst_index_default_hideinstructor = 0;
     }
     if (!isset($data->vericite_student_score_default_forums)) {
         $data->vericite_student_score_default_forums = 0;
@@ -72,11 +84,20 @@ if (($data = $mform->get_data()) && confirm_sesskey()) {
     if (!isset($data->vericite_exclude_quotes_default_forums)) {
         $data->vericite_exclude_quotes_default_forums = 0;
     }
+    if (!isset($data->vericite_exclude_quotes_default_forums_hideinstructor)) {
+        $data->vericite_exclude_quotes_default_forums_hideinstructor = 0;
+    }
     if (!isset($data->vericite_exclude_self_plag_default_forums)) {
         $data->vericite_exclude_self_plag_default_forums = 0;
     }
+    if (!isset($data->vericite_exclude_self_plag_default_forums_hideinstructor)) {
+        $data->vericite_exclude_self_plag_default_forums_hideinstructor = 0;
+    }
     if (!isset($data->vericite_store_inst_index_default_forums)) {
         $data->vericite_store_inst_index_default_forums = 0;
+    }
+    if (!isset($data->vericite_store_inst_index_default_forums_hideinstructor)) {
+        $data->vericite_store_inst_index_default_forums_hideinstructor = 0;
     }
 
     // Save each setting.

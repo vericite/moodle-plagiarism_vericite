@@ -23,19 +23,21 @@ class send_files extends \core\task\scheduled_task {
         $plagiarismsettings = plagiarism_vericite_get_settings();
 
         // Submit queued files.
-        $dbfiles = $DB->get_records('plagiarism_vericite_files', array('status' => PLAGIARISM_VERICITE_STATUS_SEND), '', 'id, cm, userid, identifier, data, status, attempts');
-        if (!empty($dbfiles)) {
+        $dbfileIDs = $DB->get_records('plagiarism_vericite_files', array('status' => PLAGIARISM_VERICITE_STATUS_SEND), '', 'id');
+        if (!empty($dbfileIDs)) {
             $fileids = array();
-            foreach ($dbfiles as $dbfile) {
+            foreach ($dbfileIDs as $dbfileID) {
                 // Lock DB records that will be worked on.
-                array_push($fileids, $dbfile->id);
+                array_push($fileids, $dbfileID->id);
             }
             list($dsql, $dparam) = $DB->get_in_or_equal($fileids);
             // TODO: Oracle 1000 in clause limit
             $DB->execute("update {plagiarism_vericite_files} set status = " . PLAGIARISM_VERICITE_STATUS_LOCKED . " where id " . $dsql, $dparam);
 
-            foreach ($dbfiles as $dbfile) {
+            foreach ($dbfileIDs as $dbfileID) {
                 try {
+                    //Get data for this row
+                    $dbfile = $DB->get_record('plagiarism_vericite_files', array('id' => $dbfileID->id), 'id, cm, userid, identifier, data, status, attempts');
                     $customdata = unserialize(base64_decode($dbfile->data));
                     $userid = $customdata['userid'];
                     $vericite = $customdata['vericite'];
