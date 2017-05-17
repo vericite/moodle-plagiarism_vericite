@@ -1,6 +1,6 @@
 <?php
 /**
- * ReportScoreReponse
+ * AssignmentscontextIDassignmentIDAssignmentAttachmentExternalContent
  *
  * PHP version 5
  *
@@ -32,14 +32,14 @@ namespace Swagger\Client\Model;
 use \ArrayAccess;
 
 /**
- * ReportScoreReponse Class Doc Comment
+ * AssignmentscontextIDassignmentIDAssignmentAttachmentExternalContent Class Doc Comment
  *
  * @category    Class
  * @package     Swagger\Client
  * @author      Swagger Codegen team
  * @link        https://github.com/swagger-api/swagger-codegen
  */
-class ReportScoreReponse implements ArrayAccess
+class AssignmentscontextIDassignmentIDAssignmentAttachmentExternalContent implements ArrayAccess
 {
     const DISCRIMINATOR = null;
 
@@ -47,19 +47,17 @@ class ReportScoreReponse implements ArrayAccess
       * The original name of the model.
       * @var string
       */
-    protected static $swaggerModelName = 'ReportScoreReponse';
+    protected static $swaggerModelName = 'assignmentscontextIDassignmentID_assignmentAttachmentExternalContent';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
       * @var string[]
       */
     protected static $swaggerTypes = [
-        'assignment' => 'string',
-        'draft' => 'bool',
         'external_content_id' => 'string',
-        'preliminary' => 'bool',
-        'score' => 'int',
-        'user' => 'string'
+        'file_name' => 'string',
+        'upload_content_length' => 'int',
+        'upload_content_type' => 'string'
     ];
 
     public static function swaggerTypes()
@@ -72,12 +70,10 @@ class ReportScoreReponse implements ArrayAccess
      * @var string[]
      */
     protected static $attributeMap = [
-        'assignment' => 'assignment',
-        'draft' => 'draft',
-        'external_content_id' => 'externalContentId',
-        'preliminary' => 'preliminary',
-        'score' => 'score',
-        'user' => 'user'
+        'external_content_id' => 'externalContentID',
+        'file_name' => 'fileName',
+        'upload_content_length' => 'uploadContentLength',
+        'upload_content_type' => 'uploadContentType'
     ];
 
 
@@ -86,12 +82,10 @@ class ReportScoreReponse implements ArrayAccess
      * @var string[]
      */
     protected static $setters = [
-        'assignment' => 'setAssignment',
-        'draft' => 'setDraft',
         'external_content_id' => 'setExternalContentId',
-        'preliminary' => 'setPreliminary',
-        'score' => 'setScore',
-        'user' => 'setUser'
+        'file_name' => 'setFileName',
+        'upload_content_length' => 'setUploadContentLength',
+        'upload_content_type' => 'setUploadContentType'
     ];
 
 
@@ -100,12 +94,10 @@ class ReportScoreReponse implements ArrayAccess
      * @var string[]
      */
     protected static $getters = [
-        'assignment' => 'getAssignment',
-        'draft' => 'getDraft',
         'external_content_id' => 'getExternalContentId',
-        'preliminary' => 'getPreliminary',
-        'score' => 'getScore',
-        'user' => 'getUser'
+        'file_name' => 'getFileName',
+        'upload_content_length' => 'getUploadContentLength',
+        'upload_content_type' => 'getUploadContentType'
     ];
 
     public static function attributeMap()
@@ -139,12 +131,10 @@ class ReportScoreReponse implements ArrayAccess
      */
     public function __construct(array $data = null)
     {
-        $this->container['assignment'] = isset($data['assignment']) ? $data['assignment'] : null;
-        $this->container['draft'] = isset($data['draft']) ? $data['draft'] : null;
         $this->container['external_content_id'] = isset($data['external_content_id']) ? $data['external_content_id'] : null;
-        $this->container['preliminary'] = isset($data['preliminary']) ? $data['preliminary'] : null;
-        $this->container['score'] = isset($data['score']) ? $data['score'] : null;
-        $this->container['user'] = isset($data['user']) ? $data['user'] : null;
+        $this->container['file_name'] = isset($data['file_name']) ? $data['file_name'] : null;
+        $this->container['upload_content_length'] = isset($data['upload_content_length']) ? $data['upload_content_length'] : null;
+        $this->container['upload_content_type'] = isset($data['upload_content_type']) ? $data['upload_content_type'] : null;
     }
 
     /**
@@ -156,6 +146,18 @@ class ReportScoreReponse implements ArrayAccess
     {
         $invalid_properties = [];
 
+        if ($this->container['external_content_id'] === null) {
+            $invalid_properties[] = "'external_content_id' can't be null";
+        }
+        if ($this->container['file_name'] === null) {
+            $invalid_properties[] = "'file_name' can't be null";
+        }
+        if ($this->container['upload_content_length'] === null) {
+            $invalid_properties[] = "'upload_content_length' can't be null";
+        }
+        if ($this->container['upload_content_type'] === null) {
+            $invalid_properties[] = "'upload_content_type' can't be null";
+        }
         return $invalid_properties;
     }
 
@@ -168,51 +170,21 @@ class ReportScoreReponse implements ArrayAccess
     public function valid()
     {
 
+        if ($this->container['external_content_id'] === null) {
+            return false;
+        }
+        if ($this->container['file_name'] === null) {
+            return false;
+        }
+        if ($this->container['upload_content_length'] === null) {
+            return false;
+        }
+        if ($this->container['upload_content_type'] === null) {
+            return false;
+        }
         return true;
     }
 
-
-    /**
-     * Gets assignment
-     * @return string
-     */
-    public function getAssignment()
-    {
-        return $this->container['assignment'];
-    }
-
-    /**
-     * Sets assignment
-     * @param string $assignment
-     * @return $this
-     */
-    public function setAssignment($assignment)
-    {
-        $this->container['assignment'] = $assignment;
-
-        return $this;
-    }
-
-    /**
-     * Gets draft
-     * @return bool
-     */
-    public function getDraft()
-    {
-        return $this->container['draft'];
-    }
-
-    /**
-     * Sets draft
-     * @param bool $draft
-     * @return $this
-     */
-    public function setDraft($draft)
-    {
-        $this->container['draft'] = $draft;
-
-        return $this;
-    }
 
     /**
      * Gets external_content_id
@@ -225,7 +197,7 @@ class ReportScoreReponse implements ArrayAccess
 
     /**
      * Sets external_content_id
-     * @param string $external_content_id
+     * @param string $external_content_id External Content ID
      * @return $this
      */
     public function setExternalContentId($external_content_id)
@@ -236,64 +208,64 @@ class ReportScoreReponse implements ArrayAccess
     }
 
     /**
-     * Gets preliminary
-     * @return bool
-     */
-    public function getPreliminary()
-    {
-        return $this->container['preliminary'];
-    }
-
-    /**
-     * Sets preliminary
-     * @param bool $preliminary
-     * @return $this
-     */
-    public function setPreliminary($preliminary)
-    {
-        $this->container['preliminary'] = $preliminary;
-
-        return $this;
-    }
-
-    /**
-     * Gets score
-     * @return int
-     */
-    public function getScore()
-    {
-        return $this->container['score'];
-    }
-
-    /**
-     * Sets score
-     * @param int $score
-     * @return $this
-     */
-    public function setScore($score)
-    {
-        $this->container['score'] = $score;
-
-        return $this;
-    }
-
-    /**
-     * Gets user
+     * Gets file_name
      * @return string
      */
-    public function getUser()
+    public function getFileName()
     {
-        return $this->container['user'];
+        return $this->container['file_name'];
     }
 
     /**
-     * Sets user
-     * @param string $user
+     * Sets file_name
+     * @param string $file_name The name of the file
      * @return $this
      */
-    public function setUser($user)
+    public function setFileName($file_name)
     {
-        $this->container['user'] = $user;
+        $this->container['file_name'] = $file_name;
+
+        return $this;
+    }
+
+    /**
+     * Gets upload_content_length
+     * @return int
+     */
+    public function getUploadContentLength()
+    {
+        return $this->container['upload_content_length'];
+    }
+
+    /**
+     * Sets upload_content_length
+     * @param int $upload_content_length The content length of the file
+     * @return $this
+     */
+    public function setUploadContentLength($upload_content_length)
+    {
+        $this->container['upload_content_length'] = $upload_content_length;
+
+        return $this;
+    }
+
+    /**
+     * Gets upload_content_type
+     * @return string
+     */
+    public function getUploadContentType()
+    {
+        return $this->container['upload_content_type'];
+    }
+
+    /**
+     * Sets upload_content_type
+     * @param string $upload_content_type The content type of the file
+     * @return $this
+     */
+    public function setUploadContentType($upload_content_type)
+    {
+        $this->container['upload_content_type'] = $upload_content_type;
 
         return $this;
     }
