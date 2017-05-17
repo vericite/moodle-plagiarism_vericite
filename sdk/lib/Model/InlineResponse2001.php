@@ -1,6 +1,6 @@
 <?php
 /**
- * ReportScoreReponse
+ * InlineResponse2001
  *
  * PHP version 5
  *
@@ -32,14 +32,14 @@ namespace Swagger\Client\Model;
 use \ArrayAccess;
 
 /**
- * ReportScoreReponse Class Doc Comment
+ * InlineResponse2001 Class Doc Comment
  *
  * @category    Class
  * @package     Swagger\Client
  * @author      Swagger Codegen team
  * @link        https://github.com/swagger-api/swagger-codegen
  */
-class ReportScoreReponse implements ArrayAccess
+class InlineResponse2001 implements ArrayAccess
 {
     const DISCRIMINATOR = null;
 
@@ -47,7 +47,7 @@ class ReportScoreReponse implements ArrayAccess
       * The original name of the model.
       * @var string
       */
-    protected static $swaggerModelName = 'ReportScoreReponse';
+    protected static $swaggerModelName = 'inline_response_200_1';
 
     /**
       * Array of property to type mappings. Used for (de)serialization

@@ -1,6 +1,6 @@
 <?php
 /**
- * ReportScoreReponse
+ * InlineResponse2002
  *
  * PHP version 5
  *
@@ -32,14 +32,14 @@ namespace Swagger\Client\Model;
 use \ArrayAccess;
 
 /**
- * ReportScoreReponse Class Doc Comment
+ * InlineResponse2002 Class Doc Comment
  *
  * @category    Class
  * @package     Swagger\Client
  * @author      Swagger Codegen team
  * @link        https://github.com/swagger-api/swagger-codegen
  */
-class ReportScoreReponse implements ArrayAccess
+class InlineResponse2002 implements ArrayAccess
 {
     const DISCRIMINATOR = null;
 
@@ -47,19 +47,18 @@ class ReportScoreReponse implements ArrayAccess
       * The original name of the model.
       * @var string
       */
-    protected static $swaggerModelName = 'ReportScoreReponse';
+    protected static $swaggerModelName = 'inline_response_200_2';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
       * @var string[]
       */
     protected static $swaggerTypes = [
-        'assignment' => 'string',
-        'draft' => 'bool',
+        'assignment_id' => 'string',
+        'context_id' => 'string',
         'external_content_id' => 'string',
-        'preliminary' => 'bool',
-        'score' => 'int',
-        'user' => 'string'
+        'url' => 'string',
+        'user_id' => 'string'
     ];
 
     public static function swaggerTypes()
@@ -72,12 +71,11 @@ class ReportScoreReponse implements ArrayAccess
      * @var string[]
      */
     protected static $attributeMap = [
-        'assignment' => 'assignment',
-        'draft' => 'draft',
-        'external_content_id' => 'externalContentId',
-        'preliminary' => 'preliminary',
-        'score' => 'score',
-        'user' => 'user'
+        'assignment_id' => 'assignmentID',
+        'context_id' => 'contextID',
+        'external_content_id' => 'externalContentID',
+        'url' => 'url',
+        'user_id' => 'userID'
     ];
 
 
@@ -86,12 +84,11 @@ class ReportScoreReponse implements ArrayAccess
      * @var string[]
      */
     protected static $setters = [
-        'assignment' => 'setAssignment',
-        'draft' => 'setDraft',
+        'assignment_id' => 'setAssignmentId',
+        'context_id' => 'setContextId',
         'external_content_id' => 'setExternalContentId',
-        'preliminary' => 'setPreliminary',
-        'score' => 'setScore',
-        'user' => 'setUser'
+        'url' => 'setUrl',
+        'user_id' => 'setUserId'
     ];
 
 
@@ -100,12 +97,11 @@ class ReportScoreReponse implements ArrayAccess
      * @var string[]
      */
     protected static $getters = [
-        'assignment' => 'getAssignment',
-        'draft' => 'getDraft',
+        'assignment_id' => 'getAssignmentId',
+        'context_id' => 'getContextId',
         'external_content_id' => 'getExternalContentId',
-        'preliminary' => 'getPreliminary',
-        'score' => 'getScore',
-        'user' => 'getUser'
+        'url' => 'getUrl',
+        'user_id' => 'getUserId'
     ];
 
     public static function attributeMap()
@@ -139,12 +135,11 @@ class ReportScoreReponse implements ArrayAccess
      */
     public function __construct(array $data = null)
     {
-        $this->container['assignment'] = isset($data['assignment']) ? $data['assignment'] : null;
-        $this->container['draft'] = isset($data['draft']) ? $data['draft'] : null;
+        $this->container['assignment_id'] = isset($data['assignment_id']) ? $data['assignment_id'] : null;
+        $this->container['context_id'] = isset($data['context_id']) ? $data['context_id'] : null;
         $this->container['external_content_id'] = isset($data['external_content_id']) ? $data['external_content_id'] : null;
-        $this->container['preliminary'] = isset($data['preliminary']) ? $data['preliminary'] : null;
-        $this->container['score'] = isset($data['score']) ? $data['score'] : null;
-        $this->container['user'] = isset($data['user']) ? $data['user'] : null;
+        $this->container['url'] = isset($data['url']) ? $data['url'] : null;
+        $this->container['user_id'] = isset($data['user_id']) ? $data['user_id'] : null;
     }
 
     /**
@@ -173,43 +168,43 @@ class ReportScoreReponse implements ArrayAccess
 
 
     /**
-     * Gets assignment
+     * Gets assignment_id
      * @return string
      */
-    public function getAssignment()
+    public function getAssignmentId()
     {
-        return $this->container['assignment'];
+        return $this->container['assignment_id'];
     }
 
     /**
-     * Sets assignment
-     * @param string $assignment
+     * Sets assignment_id
+     * @param string $assignment_id Assignment ID.
      * @return $this
      */
-    public function setAssignment($assignment)
+    public function setAssignmentId($assignment_id)
     {
-        $this->container['assignment'] = $assignment;
+        $this->container['assignment_id'] = $assignment_id;
 
         return $this;
     }
 
     /**
-     * Gets draft
-     * @return bool
+     * Gets context_id
+     * @return string
      */
-    public function getDraft()
+    public function getContextId()
     {
-        return $this->container['draft'];
+        return $this->container['context_id'];
     }
 
     /**
-     * Sets draft
-     * @param bool $draft
+     * Sets context_id
+     * @param string $context_id Context ID.
      * @return $this
      */
-    public function setDraft($draft)
+    public function setContextId($context_id)
     {
-        $this->container['draft'] = $draft;
+        $this->container['context_id'] = $context_id;
 
         return $this;
     }
@@ -225,7 +220,7 @@ class ReportScoreReponse implements ArrayAccess
 
     /**
      * Sets external_content_id
-     * @param string $external_content_id
+     * @param string $external_content_id external Content ID
      * @return $this
      */
     public function setExternalContentId($external_content_id)
@@ -236,64 +231,43 @@ class ReportScoreReponse implements ArrayAccess
     }
 
     /**
-     * Gets preliminary
-     * @return bool
-     */
-    public function getPreliminary()
-    {
-        return $this->container['preliminary'];
-    }
-
-    /**
-     * Sets preliminary
-     * @param bool $preliminary
-     * @return $this
-     */
-    public function setPreliminary($preliminary)
-    {
-        $this->container['preliminary'] = $preliminary;
-
-        return $this;
-    }
-
-    /**
-     * Gets score
-     * @return int
-     */
-    public function getScore()
-    {
-        return $this->container['score'];
-    }
-
-    /**
-     * Sets score
-     * @param int $score
-     * @return $this
-     */
-    public function setScore($score)
-    {
-        $this->container['score'] = $score;
-
-        return $this;
-    }
-
-    /**
-     * Gets user
+     * Gets url
      * @return string
      */
-    public function getUser()
+    public function getUrl()
     {
-        return $this->container['user'];
+        return $this->container['url'];
     }
 
     /**
-     * Sets user
-     * @param string $user
+     * Sets url
+     * @param string $url The url to retrieve the report
      * @return $this
      */
-    public function setUser($user)
+    public function setUrl($url)
     {
-        $this->container['user'] = $user;
+        $this->container['url'] = $url;
+
+        return $this;
+    }
+
+    /**
+     * Gets user_id
+     * @return string
+     */
+    public function getUserId()
+    {
+        return $this->container['user_id'];
+    }
+
+    /**
+     * Sets user_id
+     * @param string $user_id User ID.
+     * @return $this
+     */
+    public function setUserId($user_id)
+    {
+        $this->container['user_id'] = $user_id;
 
         return $this;
     }
