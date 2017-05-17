@@ -90,7 +90,6 @@ class send_files extends \core\task\scheduled_task {
 					plagiarism_vericite_log("externalContentData:\n" . serialize($externalContentData));
 					$reportMetaData['external_content_data'] = array(new \Swagger\Client\Model\ExternalContentData($externalContentData));
                     $apiArgs['report_meta_data'] = new \Swagger\Client\Model\ReportMetaData($reportMetaData);
-					
 					$result = plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST, $apiArgs);
 
 					if(!empty($result) && is_array($result)){
@@ -106,6 +105,15 @@ class send_files extends \core\task\scheduled_task {
                                 curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
                                 curl_setopt($ch, CURLOPT_PUT, 1);
                                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                                //Set Encryption from header
+                                if($externalcontentuploadinfo->getHeaders()){
+                                    $headers = [];
+                                    foreach ($externalcontentuploadinfo->getHeaders() as $key => $value){
+                                        $headers[] = "$key: $value";
+                                    }
+                                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                                }
+
 								$resultJson = plagiarism_vericite_curl_exec($ch);
 								if(!empty($resultJson)){
 			                        // Success: do nothing.
