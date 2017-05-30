@@ -127,5 +127,15 @@ function xmldb_plagiarism_vericite_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2017051700, 'plagiarism', 'vericite');
     }
 
+    if($oldversion < 2017060100){
+        $table = new xmldb_table('plagiarism_vericite_tokens');
+        $columns = $DB->get_columns('plagiarism_vericite_tokens');
+        if ($columns['token']->max_length < 500) {
+            $field = new xmldb_field('token', XMLDB_TYPE_CHAR, '500', null, XMLDB_NOTNULL, null, null, 'timeretrieved');
+            $dbman->change_field_precision($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2017060100, 'plagiarism', 'vericite');
+    }
+
     return true;
 }
