@@ -193,7 +193,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             return false;
         }
 
-        $viewPreliminaryReport = get_setting_boolean($plagiarismsettings, 'vericite_preliminary_report', false);
+        $viewPreliminaryReport = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_preliminary_report', false);
 
         $results = array(
                 'analyzed' =>  0,
@@ -428,50 +428,50 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
             // Set values for settings that were hidden from instructor, but set in plugin settings
             if (strcmp("assign", $data->modulename) == 0) {
-                if (get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_hideinstructor', false) == 1) {
-                    if(get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default', false) == 1) {
-                        $data->plagiarism_exclude_quotes = get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default', false);
+                if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_hideinstructor', false) == 1) {
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default', false) == 1) {
+                        $data->plagiarism_exclude_quotes = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default', false);
                     } else {
                         unset($data->plagiarism_exclude_quotes);
                     }
                 }
 
-                if (get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_hideinstructor', false) == 1) {
-                    if(get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default', false) == 1) {
-                        $data->plagiarism_exclude_self_plag = get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default', false);
+                if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_hideinstructor', false) == 1) {
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default', false) == 1) {
+                        $data->plagiarism_exclude_self_plag = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default', false);
                     } else {
                         unset($data->plagiarism_exclude_self_plag);
                     }
                 }
 
-                if (get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_hideinstructor', false) == 1) {
-                    if(get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default', false) == 1) {
-                        $data->plagiarism_store_inst_index = get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default', false);
+                if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_hideinstructor', false) == 1) {
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default', false) == 1) {
+                        $data->plagiarism_store_inst_index = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default', false);
                     } else {
                         unset($data->plagiarism_store_inst_index);
                     }
                 }
 
             } else if (strcmp("forum", $data->modulename) == 0) {
-                if (get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums_hideinstructor', false) == 1) {
-                    if(get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', false) == 1) {
-                        $data->plagiarism_exclude_quotes = get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', false);
+                if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums_hideinstructor', false) == 1) {
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', false) == 1) {
+                        $data->plagiarism_exclude_quotes = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', false);
                     } else {
                         unset($data->plagiarism_exclude_quotes);
                     }
                 }
 
-                if (get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums_hideinstructor', false) == 1) {
-                    if(get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums', false) == 1) {
-                        $data->plagiarism_exclude_self_plag = get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums', false);
+                if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums_hideinstructor', false) == 1) {
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums', false) == 1) {
+                        $data->plagiarism_exclude_self_plag = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums', false);
                     } else {
                         unset($data->plagiarism_exclude_self_plag);
                     }
                 }
 
-                if (get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums_hideinstructor', false) == 1) {
-                    if(get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', false) == 1) {
-                        $data->plagiarism_store_inst_index = get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', false);
+                if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums_hideinstructor', false) == 1) {
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', false) == 1) {
+                        $data->plagiarism_store_inst_index = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', false);
                     } else {
                         unset($data->plagiarism_store_inst_index);
                     }
@@ -580,8 +580,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         // Exclude Quotes
         if(!(
-            (strcmp("mod_assign", $modulename) == 0 && get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_hideinstructor', false) == 1) ||
-            (strcmp("mod_forum", $modulename) == 0  && get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums_hideinstructor', false) == 1)
+            (strcmp("mod_assign", $modulename) == 0 && plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_hideinstructor', false) == 1) ||
+            (strcmp("mod_forum", $modulename) == 0  && plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums_hideinstructor', false) == 1)
         )) {
             $mform->addElement('checkbox', 'plagiarism_exclude_quotes', get_string("excludequotesvericite", "plagiarism_vericite"));
             $mform->addHelpButton('plagiarism_exclude_quotes', 'excludequotesvericite', 'plagiarism_vericite');
@@ -598,8 +598,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         // Exclude Self Plag
         if(!(
-            (strcmp("mod_assign", $modulename) == 0 && get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_hideinstructor', false) == 1) ||
-            (strcmp("mod_forum", $modulename) == 0  && get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums_hideinstructor', false) == 1)
+            (strcmp("mod_assign", $modulename) == 0 && plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_hideinstructor', false) == 1) ||
+            (strcmp("mod_forum", $modulename) == 0  && plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums_hideinstructor', false) == 1)
         )) {
             $mform->addElement('checkbox', 'plagiarism_exclude_self_plag', get_string("excludeselfplagvericite", "plagiarism_vericite"));
             $mform->addHelpButton('plagiarism_exclude_self_plag', 'excludeselfplagvericite', 'plagiarism_vericite');
@@ -616,8 +616,8 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         // Store in Inst Index
         if(!(
-            (strcmp("mod_assign", $modulename) == 0 && get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_hideinstructor', false) == 1) ||
-            (strcmp("mod_forum", $modulename) == 0  && get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums_hideinstructor', false) == 1)
+            (strcmp("mod_assign", $modulename) == 0 && plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_hideinstructor', false) == 1) ||
+            (strcmp("mod_forum", $modulename) == 0  && plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums_hideinstructor', false) == 1)
         )) {
             $mform->addElement('checkbox', 'plagiarism_store_inst_index', get_string("storeinstindexvericite", "plagiarism_vericite"));
             $mform->addHelpButton('plagiarism_store_inst_index', 'storeinstindexvericite', 'plagiarism_vericite');
@@ -812,7 +812,7 @@ function plagiarism_vericite_get_settings() {
     }
 }
 
-function get_setting_boolean($plagiarismsettings, $key, $default = false) {
+function plagiarism_vericite_get_setting_boolean($plagiarismsettings, $key, $default = false) {
     return isset($plagiarismsettings[$key]) ? $plagiarismsettings[$key] : $default;
 }
 
