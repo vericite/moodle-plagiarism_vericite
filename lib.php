@@ -429,24 +429,24 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             // Set values for settings that were hidden from instructor, but set in plugin settings
             if (strcmp("assign", $data->modulename) == 0) {
                 if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_hideinstructor', false) == 1) {
-                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default', false) == 1) {
-                        $data->plagiarism_exclude_quotes = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default', false);
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default', true) == 1) {
+                        $data->plagiarism_exclude_quotes = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default', true);
                     } else {
                         unset($data->plagiarism_exclude_quotes);
                     }
                 }
 
                 if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_hideinstructor', false) == 1) {
-                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default', false) == 1) {
-                        $data->plagiarism_exclude_self_plag = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default', false);
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default', true) == 1) {
+                        $data->plagiarism_exclude_self_plag = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default', true);
                     } else {
                         unset($data->plagiarism_exclude_self_plag);
                     }
                 }
 
                 if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_hideinstructor', false) == 1) {
-                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default', false) == 1) {
-                        $data->plagiarism_store_inst_index = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default', false);
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default', true) == 1) {
+                        $data->plagiarism_store_inst_index = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default', true);
                     } else {
                         unset($data->plagiarism_store_inst_index);
                     }
@@ -454,24 +454,24 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
             } else if (strcmp("forum", $data->modulename) == 0) {
                 if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums_hideinstructor', false) == 1) {
-                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', false) == 1) {
-                        $data->plagiarism_exclude_quotes = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', false);
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', true) == 1) {
+                        $data->plagiarism_exclude_quotes = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', true);
                     } else {
                         unset($data->plagiarism_exclude_quotes);
                     }
                 }
 
                 if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums_hideinstructor', false) == 1) {
-                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums', false) == 1) {
-                        $data->plagiarism_exclude_self_plag = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums', false);
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums', true) == 1) {
+                        $data->plagiarism_exclude_self_plag = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_self_plag_default_forums', true);
                     } else {
                         unset($data->plagiarism_exclude_self_plag);
                     }
                 }
 
                 if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums_hideinstructor', false) == 1) {
-                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', false) == 1) {
-                        $data->plagiarism_store_inst_index = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', false);
+                    if(plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', true) == 1) {
+                        $data->plagiarism_store_inst_index = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', true);
                     } else {
                         unset($data->plagiarism_store_inst_index);
                     }
