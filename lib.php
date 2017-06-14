@@ -193,7 +193,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
             return false;
         }
 
-        $viewPreliminaryReport = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_preliminary_report', false);
+        $viewPreliminaryReport = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_preliminary_report', true);
 
         $results = array(
                 'analyzed' =>  0,
