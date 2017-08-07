@@ -127,17 +127,17 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
 
         $rank = $this->plagiarism_vericite_get_css_rank($results['score']);
 
-        $similaritystring = '&nbsp;<span class="' . $rank . '">' . $results['score'] . '%</span>';
+        $similaritystring = '&nbsp;<span class="' . format_string($rank) . '">' . format_string($results['score']) . '%</span>';
 
         if(!($results['isPreliminary'] == 1 && $results['viewPreliminaryReport'] == 0)) {
             //Show Report and/or Score if allowed.
             if (!empty($results['reporturl'])) {
                 // User gets to see link to similarity report & similarity score
                 if(($results['viewFullReport'] && $results['viewSimilarityScore']) || $results['isInstructor']) {
-                    $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
+                    $output = '<span class="vericite-report"><a href="' . format_string($results['reporturl']) . '" target="_blank">';
                     $output .= get_string('similarity', 'plagiarism_vericite').':</a>' . $similaritystring . '</span>';
                 } else if($results['viewFullReport'] && !$results['viewSimilarityScore']) {
-                    $output = '<span class="vericite-report"><a href="' . $results['reporturl'] . '" target="_blank">';
+                    $output = '<span class="vericite-report"><a href="' . format_string($results['reporturl']) . '" target="_blank">';
                     $output .= get_string('similarity', 'plagiarism_vericite').'</a></span>';
                 } else if(!$results['viewFullReport'] && $results['viewSimilarityScore']) {
                     $output = '<span class="vericite-report">' . get_string('similarity', 'plagiarism_vericite').':' . $similaritystring . '</span>';
@@ -712,12 +712,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                 }
             }
         }
-
         if (count($apiscores) > 0) {
             // We found some scores, let's update the DB.
             $dbscores = $DB->get_records('plagiarism_vericite_files', array('cm' => $cmid), '', 'id, cm, userid, identifier, similarityscore, preliminary, timeretrieved');
-            $sql = "INSERT INTO {plagiarism_vericite_files} (id, cm, userid, identifier, similarityscore, preliminary, timeretrieved, data, status) VALUES ";
-            $executequery = false;
             foreach ($apiscores as $apiscore) {
                 foreach ($dbscores as $dbscore) {
                     if ($dbscore->cm == $apiscore->cm && $dbscore->userid == $apiscore->userid && $dbscore->identifier == $apiscore->identifier) {
@@ -726,35 +723,12 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                         break;
                     }
                 }
-
-                if ($executequery) {
-                    // Add a comma since this isn't the first.
-                    $sql .= ",";
+                if (!empty($apiscore->id)) {
+                    $DB->update_record('plagiarism_vericite_files', $apiscore);
                 } else {
-                    // We have at least one update.
-                    $executequery = true;
-                }
-                $id = (empty($apiscore->id)) ? "null" : $apiscore->id;
-                $sql .= "($id,$apiscore->cm,$apiscore->userid,'$apiscore->identifier',$apiscore->similarityscore,$apiscore->preliminary,$apiscore->timeretrieved,'$apiscore->data',$apiscore->status)";
-            }
-
-            if ($executequery) {
-                try {
-                    // TODO: Create an Oracle version of this query.
-                    $sql .= " ON DUPLICATE KEY UPDATE similarityscore=VALUES(similarityscore), preliminary=VALUES(preliminary, timeretrieved=VALUES(timeretrieved), status=VALUES(status), data=VALUE(data)";
-                    $DB->execute($sql);
-                } catch (Exception $e) {
-                    // The fancy bulk update query didn't work, so fall back to one update at a time.
-                    foreach ($apiscores as $apiscore) {
-                        if (!empty($apiscore->id)) {
-                            $DB->update_record('plagiarism_vericite_files', $apiscore);
-                        } else {
-                            $DB->insert_record('plagiarism_vericite_files', $apiscore);
-                        }
-                    }
+                    $DB->insert_record('plagiarism_vericite_files', $apiscore);
                 }
             }
-
         }
 
         return $scoreElement;
