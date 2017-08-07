@@ -106,7 +106,7 @@ if (($data = $mform->get_data()) && confirm_sesskey()) {
             set_config($field, $value, 'plagiarism');
         }
     }
-    $OUTPUT->notification(get_string('savedconfigsuccess', 'plagiarism_vericite'), 'notifysuccess');
+    $OUTPUT->notification(get_string('savedconfigsuccess', 'plagiarism_vericite'), \core\output\notification::NOTIFY_SUCCESS);
 }
 $plagiarismsettings = (array)get_config('plagiarism');
 $mform->set_data($plagiarismsettings);
