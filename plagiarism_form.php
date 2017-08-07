@@ -50,8 +50,11 @@ class plagiarism_setup_form extends moodleform {
 
         $mform->addElement('checkbox', 'vericite_disable_dynamic_inline', get_string('disable_dynamic_inline', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_disable_dynamic_inline', 'disable_dynamic_inline', 'plagiarism_vericite');
+        $mform->setDefault('vericite_disable_dynamic_inline', false);
+
         $mform->addElement('checkbox', 'vericite_enable_debugging', get_string('enable_debugging', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_enable_debugging', 'enable_debugging', 'plagiarism_vericite');
+        $mform->setDefault('vericite_enable_debugging', false);
 
         //show a preliminary score
         $mform->addElement('checkbox', 'vericite_preliminary_report', get_string('preliminaryreportvericite', 'plagiarism_vericite'));
