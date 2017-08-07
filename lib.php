@@ -694,21 +694,26 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         $apiscores = array();
         if (is_array($scores) && count($scores) > 0) {
             foreach ($scores AS $reportscoreresponse) {
-				plagiarism_vericite_log("scores for each\ngetAssignment: " . $reportscoreresponse->getAssignment() . "\ngetUser: " . $reportscoreresponse->getUser() . "\ngetExternalContentId: " . $reportscoreresponse->getExternalContentId() . "\ngetScore: " . $reportscoreresponse->getScore());
-                $newelement = new StdClass();
-                $newelement->cm = $reportscoreresponse->getAssignment();
-                $newelement->userid = $reportscoreresponse->getUser();
-                $newelement->identifier = $reportscoreresponse->getExternalContentId();
-                $newelement->similarityscore = $reportscoreresponse->getScore();
-                $newelement->preliminary = $reportscoreresponse->getPreliminary();
-                $newelement->timeretrieved = time();
-                $newelement->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
-                $newelement->data = '';
-                $apiscores = array_merge($apiscores, array($newelement));
-                if ($newelement->identifier == $fileid && $newelement->userid == $userid) {
-                    // We found this file's score, so set it.
-					plagiarism_vericite_log("score found");
-                    $scoreElement = $newelement;
+                if(!empty($reportscoreresponse->getAssignment())
+                    && !empty($reportscoreresponse->getUser())
+                    && !empty($reportscoreresponse->getExternalContentId())
+                    && !empty($reportscoreresponse->getAssignment())){
+                  plagiarism_vericite_log("scores for each\ngetAssignment: " . $reportscoreresponse->getAssignment() . "\ngetUser: " . $reportscoreresponse->getUser() . "\ngetExternalContentId: " . $reportscoreresponse->getExternalContentId() . "\ngetScore: " . $reportscoreresponse->getScore());
+                  $newelement = new StdClass();
+                  $newelement->cm = $reportscoreresponse->getAssignment();
+                  $newelement->userid = $reportscoreresponse->getUser();
+                  $newelement->identifier = $reportscoreresponse->getExternalContentId();
+                  $newelement->similarityscore = $reportscoreresponse->getScore();
+                  $newelement->preliminary = $reportscoreresponse->getPreliminary();
+                  $newelement->timeretrieved = time();
+                  $newelement->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
+                  $newelement->data = '';
+                  $apiscores = array_merge($apiscores, array($newelement));
+                  if ($newelement->identifier == $fileid && $newelement->userid == $userid) {
+                      // We found this file's score, so set it.
+  					plagiarism_vericite_log("score found");
+                      $scoreElement = $newelement;
+                  }
                 }
             }
         }
