@@ -4,15 +4,10 @@ sudo: false
 
 addons:
   postgresql: "9.3"
-  apt:
-    packages:
-      - oracle-java8-installer
-      - oracle-java8-set-default
 
 cache:
   directories:
     - $HOME/.composer/cache
-    - $HOME/.npm
 
 php:
  - 5.6
