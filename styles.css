@@ -1,6 +1,6 @@
 /**
  * File styles.css.
- * Contains vendor-prefixed declarations for the VeriCite plagiarism 
+ * Contains vendor-prefixed declarations for the VeriCite plagiarism
  * detection service.
  */
 
@@ -14,7 +14,7 @@
 .vericite-report .vericite-rank-3,
 .vericite-report .vericite-rank-2,
 .vericite-report .vericite-rank-1,
-.vericite-report .vericite-rank-0{
+.vericite-report .vericite-rank-0 {
     color: #fff;
     font-weight: bold;
     padding: 0.2em;
