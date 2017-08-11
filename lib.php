@@ -694,16 +694,19 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
         $apiscores = array();
         if (is_array($scores) && count($scores) > 0) {
             foreach ($scores AS $reportscoreresponse) {
-                if(!empty($reportscoreresponse->getAssignment())
-                    && !empty($reportscoreresponse->getUser())
-                    && !empty($reportscoreresponse->getExternalContentId())
-                    && !empty($reportscoreresponse->getAssignment())){
-                  plagiarism_vericite_log("scores for each\ngetAssignment: " . $reportscoreresponse->getAssignment() . "\ngetUser: " . $reportscoreresponse->getUser() . "\ngetExternalContentId: " . $reportscoreresponse->getExternalContentId() . "\ngetScore: " . $reportscoreresponse->getScore());
+                $rsrassignment = $reportscoreresponse->getAssignment();
+                $rsruser = $reportscoreresponse->getUser();
+                $rsrcontentid = $reportscoreresponse->getExternalContentId();
+                $rsrscore = $reportscoreresponse->getScore();
+
+                // Prior to PHP 5.5, empty() only supports variables; anything else will result in a parse error.
+                if(!empty($rsrassignment) && !empty($rsruser) && !empty($rsrcontentid) && !empty($rsrscore)) {
+                  plagiarism_vericite_log("scores for each\ngetAssignment: " . $rsrassignment . "\ngetUser: " . $rsruser . "\ngetExternalContentId: " . $rsrcontentid . "\ngetScore: " . $rsrscore);
                   $newelement = new StdClass();
-                  $newelement->cm = $reportscoreresponse->getAssignment();
-                  $newelement->userid = $reportscoreresponse->getUser();
-                  $newelement->identifier = $reportscoreresponse->getExternalContentId();
-                  $newelement->similarityscore = $reportscoreresponse->getScore();
+                  $newelement->cm = $rsrassignment;
+                  $newelement->userid = $rsruser;
+                  $newelement->identifier = $rsrcontentid;
+                  $newelement->similarityscore = $rsrscore;
                   $newelement->preliminary = $reportscoreresponse->getPreliminary();
                   $newelement->timeretrieved = time();
                   $newelement->status = PLAGIARISM_VERICITE_STATUS_SUCCESS;
@@ -711,7 +714,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin {
                   $apiscores = array_merge($apiscores, array($newelement));
                   if ($newelement->identifier == $fileid && $newelement->userid == $userid) {
                       // We found this file's score, so set it.
-  					plagiarism_vericite_log("score found");
+                      plagiarism_vericite_log("score found");
                       $scoreElement = $newelement;
                   }
                 }
