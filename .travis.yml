@@ -13,11 +13,13 @@ php:
  - 7.0
 
 env:
- global:
-  - MOODLE_BRANCH=MOODLE_30_STABLE
- matrix:
-  - DB=pgsql
-  - DB=mysqli
+  global:
+    - IGNORE_PATHS=sdk
+  matrix:
+    - DB=pgsql MOODLE_BRANCH=MOODLE_27_STABLE
+    - DB=mysqli MOODLE_BRANCH=MOODLE_27_STABLE
+    - DB=pgsql MOODLE_BRANCH=MOODLE_28_STABLE
+    - DB=mysqli MOODLE_BRANCH=MOODLE_28_STABLE
 
 before_install:
   - phpenv config-rm xdebug.ini
@@ -31,9 +33,9 @@ install:
 
 script:
   - moodle-plugin-ci phplint
-  - moodle-plugin-ci phpcpd
+  #- moodle-plugin-ci phpcpd
   - moodle-plugin-ci phpmd
-  - moodle-plugin-ci codechecker
+  #- moodle-plugin-ci codechecker
   - moodle-plugin-ci csslint
   - moodle-plugin-ci shifter
   - moodle-plugin-ci jshint
