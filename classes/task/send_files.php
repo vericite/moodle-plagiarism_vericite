@@ -94,33 +94,28 @@ class send_files extends \core\task\scheduled_task
                     $reportMetaData['external_content_data'] = array(new \Swagger\Client\Model\ExternalContentData($externalContentData));
                     $apiArgs['report_meta_data'] = new \Swagger\Client\Model\ReportMetaData($reportMetaData);
                     $result = plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST, $apiArgs);
-
                     if (!empty($result) && is_array($result)) {
                         foreach ($result AS $externalcontentuploadinfo) {
                             // Now see if there are any presigned URLs we need to upload our attachment to.
                             if ($externalcontentuploadinfo) {
                                 plagiarism_vericite_log("urlPost:\n" . $externalcontentuploadinfo->getUrlPost() . "\nfilepath: " . $filepath);
-                                $ch = curl_init();
-                                curl_setopt($ch, CURLOPT_URL, $externalcontentuploadinfo->getUrlPost());
-                                $fh_res = fopen($filepath, 'r');
-                                curl_setopt($ch, CURLOPT_INFILE, $fh_res);
-                                curl_setopt($ch, CURLOPT_INFILESIZE, filesize($filepath));
-                                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
-                                curl_setopt($ch, CURLOPT_PUT, 1);
-                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                                $c = new curl();
+                                $url = $externalcontentuploadinfo->getUrlPost();
+                                $params = array('file' => $filepath);
+                                $options = array('CURLOPT_CONNECTTIMEOUT' => 120);
                                 //Set Encryption from header
                                 if ($externalcontentuploadinfo->getHeaders()) {
                                     $headers = [];
                                     foreach ($externalcontentuploadinfo->getHeaders() as $key => $value) {
                                         $headers[] = "$key: $value";
                                     }
-                                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                                    $options['CURLOPT_HTTPHEADER'] = $headers;
                                 }
 
-                                $resultJson = plagiarism_vericite_curl_exec($ch);
-                                if (!empty($resultJson)) {
-                                                   // Success: do nothing.
-                                                   plagiarism_vericite_log("VeriCite: cron submit success.");
+                                $result_json = $c->put($url, $params, $options);
+                                if (!empty($result_json)) {
+                                    // Success: do nothing.
+                                    plagiarism_vericite_log("VeriCite: cron submit success.");
                                 } else {
                                     // Error of some sort, do not save.
                                     plagiarism_vericite_log('failed to send file to VeriCite');

@@ -816,16 +816,36 @@ function plagiarism_vericite_ends_with($str, $test)
     return substr_compare($str, $test, -strlen($test), strlen($test)) === 0;
 }
 
-function plagiarism_vericite_call_api($hostUrl, $action, $args)
-{
-    $apiClient = new \Swagger\Client\ApiClient();
-    if (!plagiarism_vericite_ends_with($hostUrl, '/')) {
-        $hostUrl .= '/';
+function plagiarism_vericite_call_api($host_url, $action, $args) {
+    global $CFG;
+
+    // Use the Moodle central proxy settings.
+    $config = new \Swagger\Client\Configuration();
+    if (!empty($CFG->proxytype)) {
+        $config->setCurlProxyType($CFG->proxytype);
     }
-    $hostUrl .= PLAGIARISM_VERICITE_API_VERSION;
-    $apiClient->getConfig()->setHost($hostUrl);
-    $assignmentsApi = new \Swagger\Client\Api\AssignmentsApi($apiClient);
-    $reportsApi = new \Swagger\Client\Api\ReportsApi($apiClient);
+    if (!empty($CFG->proxyhost)) {
+        $config->setCurlProxyHost($CFG->proxyhost);
+    }
+    if (!empty($CFG->proxyport)) {
+        $config->setCurlProxyPort($CFG->proxyport);
+    }
+    if (!empty($CFG->proxyuser)) {
+        $config->setCurlProxyUser($CFG->proxyuser);
+    }
+    if (!empty($CFG->proxypassword)) {
+        $config->setCurlProxyPassword($CFG->proxypassword);
+    }
+
+    if (!plagiarism_vericite_ends_with($host_url, '/')) {
+        $host_url .= '/';
+    }
+    $host_url .= PLAGIARISM_VERICITE_API_VERSION;
+    $config->setHost($host_url);
+
+    $api_client = new \Swagger\Client\api_client($config);
+    $assignments_api = new \Swagger\Client\Api\AssignmentsApi($api_client);
+    $reports_api = new \Swagger\Client\Api\ReportsApi($api_client);
     $success = false;
     $attempts = 0;
     $result = null;
@@ -834,16 +854,16 @@ function plagiarism_vericite_call_api($hostUrl, $action, $args)
             plagiarism_vericite_log("VeriCite API call: " . $action . ", attempt: " . $attempts . ", args: \n" . serialize($args));
             switch ($action) {
             case PLAGIARISM_VERICITE_ACTION_ASSIGNMENTS:
-                $result = $assignmentsApi->createUpdateAssignment($args['context_id'], $args['assignment_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_data']);
+                $result = $assignments_api->createUpdateAssignment($args['context_id'], $args['assignment_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_data']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST:
-                $result = $reportsApi->submitRequest($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data'], null, "true");
+                $result = $reports_api->submitRequest($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data'], null, "true");
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_SCORES:
-                $result = $reportsApi->getScores($args['context_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_id'], $args['user_id'], $args['external_content_id']);
+                $result = $reports_api->getScores($args['context_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_id'], $args['user_id'], $args['external_content_id']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_URLS:
-                $result = $reportsApi->getReportUrls($args['context_id'], $args['assignment_id_filter'], $args['consumer'], $args['consumer_secret'], $args['token_user'], $args['token_user_role'], $args['user_id_filter'], $args['external_content_id_filter']);
+                $result = $reports_api->getReportUrls($args['context_id'], $args['assignment_id_filter'], $args['consumer'], $args['consumer_secret'], $args['token_user'], $args['token_user_role'], $args['user_id_filter'], $args['external_content_id_filter']);
                 break;
             }
             $success = true;
