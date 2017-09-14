@@ -843,7 +843,7 @@ function plagiarism_vericite_call_api($host_url, $action, $args) {
     $host_url .= PLAGIARISM_VERICITE_API_VERSION;
     $config->setHost($host_url);
 
-    $api_client = new \Swagger\Client\api_client($config);
+    $api_client = new \Swagger\Client\ApiClient($config);
     $assignments_api = new \Swagger\Client\Api\AssignmentsApi($api_client);
     $reports_api = new \Swagger\Client\Api\ReportsApi($api_client);
     $success = false;
