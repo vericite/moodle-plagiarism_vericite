@@ -879,8 +879,7 @@ function plagiarism_vericite_call_api($host_url, $action, $args) {
     return $result;
 }
 
-function plagiarism_vericite_serialize_fields($fields)
-{
+function plagiarism_vericite_serialize_fields($fields) {
     $fields_string = '';
     foreach ($fields as $key=>$value) {
         if (is_array($value)) {
@@ -893,50 +892,68 @@ function plagiarism_vericite_serialize_fields($fields)
     return $fields_string;
 }
 
-function plagiarism_vericite_curl_exec($ch)
-{
+function plagiarism_vericite_curl_exec($ch) {
+    global $CFG;
+
+    if (!empty($CFG->proxyhost)) {
+        if (empty($CFG->proxyport)) {
+            curl_setopt($ch, CURLOPT_PROXY, $CFG->proxyhost);
+        } else {
+            curl_setopt($ch, CURLOPT_PROXY, $CFG->proxyhost.':'.$CFG->proxyport);
+        }
+        if (!empty($CFG->proxyuser) and !empty($CFG->proxypassword)) {
+            curl_setopt($ch, CURLOPT_PROXYUSERPWD, $CFG->proxyuser.':'.$CFG->proxypassword);
+            curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_BASIC | CURLAUTH_NTLM);
+        }
+        if (!empty($CFG->proxytype)) {
+            if ($CFG->proxytype == 'SOCKS5') {
+                curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+            } else {
+                curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+                curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, FALSE);
+            }
+        }
+    }
+
     $result = null;
     $attempts = 0;
     $success = false;
     do {
-        //execute post
         $result = curl_exec($ch);
         $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         plagiarism_vericite_log(curl_getinfo($ch, CURLINFO_HEADER_OUT));
-        plagiarism_vericite_log("attempts: " . $attempts);
-        plagiarism_vericite_log("response code: " . $responseCode);
-           plagiarism_vericite_log("result:\n" . $result);
+        plagiarism_vericite_log("attempts: " . $attempts . "; response code: " . $responseCode . "; result:\n" . $result);
         if ($result === false || $responseCode != 200) {
-            //make sure to return null so that the caller knows it failed
+            // Make sure to return null so that the caller knows it failed.
             $result = null;
             $success = false;
         } else {
-            //a request could time out, check for a result message error
+            // A request could time out, check for a result message error.
             if (!empty($result) && (substr($result, 0, 1) === "{" || substr($result, 0, 1) === "[")) {
                 $result = json_decode($result);
                 if (isset($result->errorMessage)) {
-                    //The request endpoint timed out, let's call again
+                    // The request endpoint timed out, let's call again.
                     plagiarism_vericite_log($result->errorMessage);
                     $success = false;
                     $result = null;
                 } else if (isset($result->message) && strpos($result->message, "timed out") !== false) {
-                    //The request endpoint timed out, let's call again
+                    // The request endpoint timed out, let's call again.
                     plagiarism_vericite_log("timed out");
                     $success = false;
                     $result = null;
                 } else {
                     plagiarism_vericite_log("success 1");
                     $success = true;
-                    //make sure we return a non-empty result to show success
+                    // Make sure we return a non-empty result to show success.
                     if (empty($result)) {
                         $result = 1;
                     }
                 }
             } else {
-                // No message is a good message :)
+                // No message is a good message.
                 plagiarism_vericite_log("success 2");
                 $success = true;
-                // Make sure we return a non-empty result to show success
+                // Make sure we return a non-empty result to show success.
                 if (empty($result)) {
                     $result = 1;
                 }
@@ -947,7 +964,6 @@ function plagiarism_vericite_curl_exec($ch)
     if ($attempts >= PLAGIARISM_VERICITE_REQUEST_ATTEMPTS) {
         plagiarism_vericite_log("no more attempts");
     }
-    //close connection
     curl_close($ch);
     return $result;
 }

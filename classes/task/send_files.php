@@ -99,20 +99,24 @@ class send_files extends \core\task\scheduled_task
                             // Now see if there are any presigned URLs we need to upload our attachment to.
                             if ($externalcontentuploadinfo) {
                                 plagiarism_vericite_log("urlPost:\n" . $externalcontentuploadinfo->getUrlPost() . "\nfilepath: " . $filepath);
-                                $c = new curl();
-                                $url = $externalcontentuploadinfo->getUrlPost();
-                                $params = array('file' => $filepath);
-                                $options = array('CURLOPT_CONNECTTIMEOUT' => 120);
+                                $ch = curl_init();
+                                curl_setopt($ch, CURLOPT_URL, $externalcontentuploadinfo->getUrlPost());
+                                $fh_res = fopen($filepath, 'r');
+                                curl_setopt($ch, CURLOPT_INFILE, $fh_res);
+                                curl_setopt($ch, CURLOPT_INFILESIZE, filesize($filepath));
+                                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
+                                curl_setopt($ch, CURLOPT_PUT, 1);
+                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
                                 //Set Encryption from header
                                 if ($externalcontentuploadinfo->getHeaders()) {
                                     $headers = [];
                                     foreach ($externalcontentuploadinfo->getHeaders() as $key => $value) {
                                         $headers[] = "$key: $value";
                                     }
-                                    $options['CURLOPT_HTTPHEADER'] = $headers;
+                                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
                                 }
 
-                                $result_json = $c->put($url, $params, $options);
+                                $result_json = plagiarism_vericite_curl_exec($ch);
                                 if (!empty($result_json)) {
                                     // Success: do nothing.
                                     plagiarism_vericite_log("VeriCite: cron submit success.");
