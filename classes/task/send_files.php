@@ -94,7 +94,6 @@ class send_files extends \core\task\scheduled_task
                     $reportMetaData['external_content_data'] = array(new \Swagger\Client\Model\ExternalContentData($externalContentData));
                     $apiArgs['report_meta_data'] = new \Swagger\Client\Model\ReportMetaData($reportMetaData);
                     $result = plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST, $apiArgs);
-
                     if (!empty($result) && is_array($result)) {
                         foreach ($result AS $externalcontentuploadinfo) {
                             // Now see if there are any presigned URLs we need to upload our attachment to.
@@ -117,10 +116,10 @@ class send_files extends \core\task\scheduled_task
                                     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
                                 }
 
-                                $resultJson = plagiarism_vericite_curl_exec($ch);
-                                if (!empty($resultJson)) {
-                                                   // Success: do nothing.
-                                                   plagiarism_vericite_log("VeriCite: cron submit success.");
+                                $result_json = plagiarism_vericite_curl_exec($ch);
+                                if (!empty($result_json)) {
+                                    // Success: do nothing.
+                                    plagiarism_vericite_log("VeriCite: cron submit success.");
                                 } else {
                                     // Error of some sort, do not save.
                                     plagiarism_vericite_log('failed to send file to VeriCite');
