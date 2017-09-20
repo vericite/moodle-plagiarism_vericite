@@ -19,7 +19,7 @@
  * @param int $oldversion
  * @return bool
  */
-function xmldb_plagiarism_vericite_upgrade($oldversion) 
+function xmldb_plagiarism_vericite_upgrade($oldversion)
 {
     global $CFG, $DB;
     $dbman = $DB->get_manager();
@@ -146,6 +146,11 @@ function xmldb_plagiarism_vericite_upgrade($oldversion)
     if ($oldversion < 2017080700) {
         // Nothing to update.
         upgrade_plugin_savepoint(true, 2017080700, 'plagiarism', 'vericite');
+    }
+
+    if ($oldversion < 2017092000) {
+        // Nothing to update.
+        upgrade_plugin_savepoint(true, 2017092000, 'plagiarism', 'vericite');
     }
 
     return true;
