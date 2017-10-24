@@ -717,7 +717,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
                 $rsrscore = $reportscoreresponse->getScore();
 
                 // Prior to PHP 5.5, empty() only supports variables; anything else will result in a parse error.
-                if(!empty($rsrassignment) && !empty($rsruser) && !empty($rsrcontentid) && !empty($rsrscore)) {
+                if(!empty($rsrassignment) && !empty($rsruser) && !empty($rsrcontentid) && isset($rsrscore)) {
                   plagiarism_vericite_log("scores for each\ngetAssignment: " . $rsrassignment . "\ngetUser: " . $rsruser . "\ngetExternalContentId: " . $rsrcontentid . "\ngetScore: " . $rsrscore);
                   $newelement = new StdClass();
                   $newelement->cm = $rsrassignment;
