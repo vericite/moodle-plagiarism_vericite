@@ -20,7 +20,7 @@
  * @since      2.0
  * @package    plagiarism_vericite
  * @subpackage plagiarism
- * @copyright  2015 Longsight, Inc.
+ * @copyright  2015 VeriCite, Inc.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

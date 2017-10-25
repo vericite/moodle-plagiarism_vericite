@@ -17,7 +17,7 @@
 /**
  *
  * @package   plagiarism_vericite
- * @copyright 2015 Longsight, Inc.
+ * @copyright 2015 VeriCite, Inc.
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['pluginname'] = 'VeriCite';
