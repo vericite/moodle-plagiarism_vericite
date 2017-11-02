@@ -20,7 +20,7 @@
  * @since      2.0
  * @package    plagiarism_vericite
  * @subpackage plagiarism
- * @copyright  2015 Longsight, Inc.
+ * @copyright  2015 VeriCite, Inc.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -360,36 +360,45 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
 
                     $urls = plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_URLS, $apiArgs);
                     if (is_array($urls) && count($urls) > 0) {
-                        foreach ($urls as $reportUrlLinkResponse) {
-                                           plagiarism_vericite_log("for each url:\ngetExternalContentId:\n" . $reportUrlLinkResponse->getExternalContentId() . "\ngetUrl:\n" . $reportUrlLinkResponse->getUrl());
-                                           //see if we found the exact token url we are looking for, if so, set it
-                            if ($fileid == $reportUrlLinkResponse->getExternalContentId()) {
-                                $token = $reportUrlLinkResponse->getUrl();
+                        foreach ($urls as $report_url_link_response) {
+                            $report_url_link_url = $report_url_link_response->getUrl();
+                            $report_url_link_identifier = $report_url_link_response->getExternalContentId();
+
+                            // We have an incomplete report response.
+                            if (empty($report_url_link_url) || empty($report_url_link_identifier)) {
+                                plagiarism_vericite_log("VeriCite: unexpectedly found a response missing data: " . print_r($report_url_link_response, true));
+                                continue;
                             }
-                                           // Store token in db to use again.
-                                           $id = - 1;
+
+                            plagiarism_vericite_log("for each url:\ngetExternalContentId:\n" . $report_url_link_identifier . "\ngetUrl:\n" . $report_url_link_url);
+                            // See if we found the exact token url we are looking for, if so, set it
+                            if ($fileid == $report_url_link_identifier) {
+                                $token = $report_url_link_url;
+                            }
+                            // Store token in db to use again.
+                            $id = - 1;
                             foreach ($dbtokens as $dbtoken) {
-                                if ($dbtoken->identifier == $reportUrlLinkResponse->getExternalContentId()) {
+                                if ($dbtoken->identifier == $report_url_link_identifier) {
                                     // We found an existing score in the db, update it.
                                     $id = $dbtoken->id;
 
                                     // This is a matched db item from the query above,
                                     // so we should update the token id and time no matter what.
-                                    $dbtoken->token = $reportUrlLinkResponse->getUrl();
+                                    $dbtoken->token = $report_url_link_url;
                                     $dbtoken->timeretrieved = time();
                                     $DB->update_record('plagiarism_vericite_tokens', $dbtoken);
                                 }
                             }
-                                           //if we didn't find and update the db for an existing token, go ahead and
-                                           //store a new record in the db for this token url
+                            // If we didn't find and update the db for an existing token, go ahead and
+                            // store a new record in the db for this token url.
                             if ($id < 0) {
                                 // Token doesn't already exist, add it.
                                 $newelement = new StdClass();
-                                $newelement->cm = $reportUrlLinkResponse->getAssignmentId();
-                                $newelement->userid = $reportUrlLinkResponse->getUserId();
-                                $newelement->identifier = $reportUrlLinkResponse->getExternalContentId();
+                                $newelement->cm = $report_url_link_response->getAssignmentId();
+                                $newelement->userid = $report_url_link_response->getUserId();
+                                $newelement->identifier = $report_url_link_identifier;
                                 $newelement->timeretrieved = time();
-                                $newelement->token = $reportUrlLinkResponse->getUrl();
+                                $newelement->token = $report_url_link_url;
                                 $newelement->tokenuser = $USER->id;
                                 $DB->insert_record('plagiarism_vericite_tokens', $newelement);
                             }
@@ -708,7 +717,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
                 $rsrscore = $reportscoreresponse->getScore();
 
                 // Prior to PHP 5.5, empty() only supports variables; anything else will result in a parse error.
-                if(!empty($rsrassignment) && !empty($rsruser) && !empty($rsrcontentid) && !empty($rsrscore)) {
+                if(!empty($rsrassignment) && !empty($rsruser) && !empty($rsrcontentid) && isset($rsrscore)) {
                   plagiarism_vericite_log("scores for each\ngetAssignment: " . $rsrassignment . "\ngetUser: " . $rsruser . "\ngetExternalContentId: " . $rsrcontentid . "\ngetScore: " . $rsrscore);
                   $newelement = new StdClass();
                   $newelement->cm = $rsrassignment;
