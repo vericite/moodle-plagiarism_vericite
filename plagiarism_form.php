@@ -113,6 +113,16 @@ class plagiarism_setup_form extends moodleform {
         $mform->addHelpButton('vericite_store_inst_index_default_hideinstructor', 'storeinstindexvericite_hideinstructor', 'plagiarism_vericite');
         $mform->setDefault('vericite_store_inst_index_default_hideinstructor', false);
 
+        //Enable Student Preview
+        //$mform->addElement('checkbox', 'vericite_enabled_student_preview_default', get_string('enablestupreviewvericite', 'plagiarism_vericite'));
+        //$mform->addHelpButton('vericite_enabled_student_preview_default', 'enablestupreviewvericite', 'plagiarism_vericite');
+        //$mform->setDefault('vericite_enabled_student_preview_default', false);
+
+        //Hide "Store in Enable Student Preview" setting from Instructor
+        $mform->addElement('checkbox', 'vericite_enabled_student_preview_default_hideinstructor', get_string('enablestupreviewvericite_hideinstructor', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_enabled_student_preview_default_hideinstructor', 'enablestupreviewvericite_hideinstructor', 'plagiarism_vericite');
+        $mform->setDefault('vericite_enabled_student_preview_default_hideinstructor', true);
+
         //Default settings for Forums
         $mform->addElement('html', get_string('vericitedefaultsettingsforums', 'plagiarism_vericite') . "<br/>");
 
@@ -150,6 +160,16 @@ class plagiarism_setup_form extends moodleform {
         $mform->addElement('checkbox', 'vericite_store_inst_index_default_forums_hideinstructor', get_string('storeinstindexvericite_hideinstructor', 'plagiarism_vericite'));
         $mform->addHelpButton('vericite_store_inst_index_default_forums_hideinstructor', 'storeinstindexvericite_hideinstructor', 'plagiarism_vericite');
         $mform->setDefault('vericite_store_inst_index_default_forums_hideinstructor', false);
+
+        //Enable Student Preview
+        //$mform->addElement('checkbox', 'vericite_enabled_student_preview_default_forums', get_string('enablestupreviewvericite', 'plagiarism_vericite'));
+        //$mform->addHelpButton('vericite_enabled_student_preview_default_forums', 'enablestupreviewvericite', 'plagiarism_vericite');
+        //$mform->setDefault('vericite_enabled_student_preview_default_forums', false);
+
+        //Hide "Enable Student Preview" from instructor
+        $mform->addElement('checkbox', 'vericite_enabled_student_preview_default_forums_hideinstructor', get_string('enablestupreviewvericite_hideinstructor', 'plagiarism_vericite'));
+        $mform->addHelpButton('vericite_enabled_student_preview_default_forums_hideinstructor', 'enablestupreviewvericite_hideinstructor', 'plagiarism_vericite');
+        $mform->setDefault('vericite_enabled_student_preview_default_forums_hideinstructor', true);
 
         $this->add_action_buttons(true);
     }
