@@ -153,5 +153,10 @@ function xmldb_plagiarism_vericite_upgrade($oldversion)
         upgrade_plugin_savepoint(true, 2017092000, 'plagiarism', 'vericite');
     }
 
+    if ($oldversion < 2017111600) {
+        // Nothing to update.
+        upgrade_plugin_savepoint(true, 2017111600, 'plagiarism', 'vericite');
+    }
+
     return true;
 }
