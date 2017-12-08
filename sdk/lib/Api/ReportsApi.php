@@ -423,9 +423,9 @@ class ReportsApi
      * @throws \Swagger\Client\ApiException on non-2xx response
      * @return \Swagger\Client\Model\InlineResponse200[]
      */
-    public function submitRequest($context_id, $assignment_id, $user_id, $consumer, $consumer_secret, $report_meta_data, $immediate_score_only = null, $encrypted = null)
+    public function submitRequest($context_id, $assignment_id, $user_id, $consumer, $consumer_secret, $report_meta_data, $immediate_score_only = null, $encrypted = null, $product_family_code = null, $product_tool_code = null)
     {
-        list($response) = $this->submitRequestWithHttpInfo($context_id, $assignment_id, $user_id, $consumer, $consumer_secret, $report_meta_data, $immediate_score_only, $encrypted);
+        list($response) = $this->submitRequestWithHttpInfo($context_id, $assignment_id, $user_id, $consumer, $consumer_secret, $report_meta_data, $immediate_score_only, $encrypted, $product_family_code, $product_tool_code);
         return $response;
     }
 
@@ -445,7 +445,7 @@ class ReportsApi
      * @throws \Swagger\Client\ApiException on non-2xx response
      * @return array of \Swagger\Client\Model\InlineResponse200[], HTTP status code, HTTP response headers (array of strings)
      */
-    public function submitRequestWithHttpInfo($context_id, $assignment_id, $user_id, $consumer, $consumer_secret, $report_meta_data, $immediate_score_only = null, $encrypted = null)
+    public function submitRequestWithHttpInfo($context_id, $assignment_id, $user_id, $consumer, $consumer_secret, $report_meta_data, $immediate_score_only = null, $encrypted = null, $product_family_code = null, $product_tool_code = null)
     {
         // verify the required parameter 'context_id' is set
         if ($context_id === null) {
@@ -486,6 +486,14 @@ class ReportsApi
         // query params
         if ($immediate_score_only !== null) {
             $queryParams['immediateScoreOnly'] = $this->apiClient->getSerializer()->toQueryValue($immediate_score_only);
+        }
+        // query params
+        if ($product_family_code !== null) {
+            $queryParams['productFamilyCode'] = $this->apiClient->getSerializer()->toQueryValue($product_family_code);
+        }
+        // query params
+        if ($product_tool_code !== null) {
+            $queryParams['productToolCode'] = $this->apiClient->getSerializer()->toQueryValue($product_tool_code);
         }
         // query params
         if ($encrypted !== null) {

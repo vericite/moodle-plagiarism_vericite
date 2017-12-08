@@ -906,7 +906,7 @@ function plagiarism_vericite_call_api($host_url, $action, $args) {
                 $result = $assignments_api->createUpdateAssignment($args['context_id'], $args['assignment_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_data']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST:
-                $result = $reports_api->submitRequest($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data'], null, "true");
+                $result = $reports_api->submitRequest($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data'], null, "true", $args['product_family_code'], $args['product_tool_code']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_SCORES:
                 $result = $reports_api->getScores($args['context_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_id'], $args['user_id'], $args['external_content_id']);
