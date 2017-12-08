@@ -360,7 +360,6 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
                     $apiArgs['token_user_first_name'] = $USER->firstname;
                     $apiArgs['token_user_last_name'] = $USER->lastname;
                     $apiArgs['token_user_email'] = $USER->email;
-                    plagiarism_vericite_log("user info: " . serialize($USER));
 
                     $urls = plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_URLS, $apiArgs);
                     if (is_array($urls) && count($urls) > 0) {
