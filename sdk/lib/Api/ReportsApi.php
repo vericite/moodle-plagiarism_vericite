@@ -104,9 +104,9 @@ class ReportsApi
      * @throws \Swagger\Client\ApiException on non-2xx response
      * @return \Swagger\Client\Model\InlineResponse2002[]
      */
-    public function getReportUrls($context_id, $assignment_id_filter, $consumer, $consumer_secret, $token_user, $token_user_role, $user_id_filter = null, $external_content_id_filter = null, $print_report_page = null)
+    public function getReportUrls($context_id, $assignment_id_filter, $consumer, $consumer_secret, $token_user, $token_user_role, $token_user_first_name, $token_user_last_name, $token_user_email, $user_id_filter = null, $external_content_id_filter = null, $print_report_page = null)
     {
-        list($response) = $this->getReportUrlsWithHttpInfo($context_id, $assignment_id_filter, $consumer, $consumer_secret, $token_user, $token_user_role, $user_id_filter, $external_content_id_filter, $print_report_page);
+        list($response) = $this->getReportUrlsWithHttpInfo($context_id, $assignment_id_filter, $consumer, $consumer_secret, $token_user, $token_user_role, $token_user_first_name, $token_user_last_name, $token_user_email, $user_id_filter, $external_content_id_filter, $print_report_page);
         return $response;
     }
 
@@ -127,7 +127,7 @@ class ReportsApi
      * @throws \Swagger\Client\ApiException on non-2xx response
      * @return array of \Swagger\Client\Model\InlineResponse2002[], HTTP status code, HTTP response headers (array of strings)
      */
-    public function getReportUrlsWithHttpInfo($context_id, $assignment_id_filter, $consumer, $consumer_secret, $token_user, $token_user_role, $user_id_filter = null, $external_content_id_filter = null, $print_report_page = null)
+    public function getReportUrlsWithHttpInfo($context_id, $assignment_id_filter, $consumer, $consumer_secret, $token_user, $token_user_role, $token_user_first_name, $token_user_last_name, $token_user_email, $user_id_filter = null, $external_content_id_filter = null, $print_report_page = null)
     {
         // verify the required parameter 'context_id' is set
         if ($context_id === null) {
@@ -188,6 +188,18 @@ class ReportsApi
         // query params
         if ($token_user_role !== null) {
             $queryParams['tokenUserRole'] = $this->apiClient->getSerializer()->toQueryValue($token_user_role);
+        }
+        // header params
+        if ($token_user_first_name !== null) {
+            $headerParams['tokenUserFirstName'] = $this->apiClient->getSerializer()->toHeaderValue($token_user_first_name);
+        }
+        // header params
+        if ($token_user_last_name !== null) {
+            $headerParams['tokenUserLastName'] = $this->apiClient->getSerializer()->toHeaderValue($token_user_last_name);
+        }
+        // header params
+        if ($token_user_email !== null) {
+            $headerParams['tokenUserEmail'] = $this->apiClient->getSerializer()->toHeaderValue($token_user_email);
         }
         // header params
         if ($consumer !== null) {
