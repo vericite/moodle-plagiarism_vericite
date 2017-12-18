@@ -74,8 +74,11 @@ class send_files extends \core\task\scheduled_task
                         fwrite($fh, $vericite['file']['content']);
                     }
                     fclose($fh);
-                    
+
+                    $cm = get_coursemodule_from_id('', $customdata['cmid']);
                     $apiArgs = array();
+                    $apiArgs['product_family_code'] = "moodle";
+                    $apiArgs['product_tool_code'] = ($cm && strpos($cm->modname, 'forum') !== false) ? "forum" : "assignment";
                     $apiArgs['context_id'] = $customdata['courseid'];
                     $apiArgs['assignment_id'] = $customdata['cmid'];
                     $apiArgs['user_id'] = $userid;

@@ -357,6 +357,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
                         $apiArgs['user_id_filter'] = null;
                         $apiArgs['token_user_role'] = 'Instructor';
                     }
+                    $apiArgs['token_user_first_name'] = $USER->firstname;
+                    $apiArgs['token_user_last_name'] = $USER->lastname;
+                    $apiArgs['token_user_email'] = $USER->email;
 
                     $urls = plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_URLS, $apiArgs);
                     if (is_array($urls) && count($urls) > 0) {
@@ -902,13 +905,13 @@ function plagiarism_vericite_call_api($host_url, $action, $args) {
                 $result = $assignments_api->createUpdateAssignment($args['context_id'], $args['assignment_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_data']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST:
-                $result = $reports_api->submitRequest($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data'], null, "true");
+                $result = $reports_api->submitRequest($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data'], null, "true", $args['product_family_code'], $args['product_tool_code']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_SCORES:
                 $result = $reports_api->getScores($args['context_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_id'], $args['user_id'], $args['external_content_id']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_URLS:
-                $result = $reports_api->getReportUrls($args['context_id'], $args['assignment_id_filter'], $args['consumer'], $args['consumer_secret'], $args['token_user'], $args['token_user_role'], $args['user_id_filter'], $args['external_content_id_filter']);
+                $result = $reports_api->getReportUrls($args['context_id'], $args['assignment_id_filter'], $args['consumer'], $args['consumer_secret'], $args['token_user'], $args['token_user_role'], $args['token_user_first_name'], $args['token_user_last_name'], $args['token_user_email'], $args['user_id_filter'], $args['external_content_id_filter']);
                 break;
             }
             $success = true;
