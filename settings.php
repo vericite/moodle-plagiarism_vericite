@@ -75,6 +75,12 @@ if (($data = $mform->get_data()) && confirm_sesskey()) {
     if (!isset($data->vericite_store_inst_index_default_hideinstructor)) {
         $data->vericite_store_inst_index_default_hideinstructor = 0;
     }
+    if (!isset($data->vericite_enabled_student_preview_default)) {
+        $data->vericite_enabled_student_preview_default = 0;
+    }
+    if (!isset($data->vericite_enabled_student_preview_default_hideinstructor)) {
+        $data->vericite_enabled_student_preview_default_hideinstructor = 0;
+    }
     if (!isset($data->vericite_student_score_default_forums)) {
         $data->vericite_student_score_default_forums = 0;
     }
@@ -98,6 +104,12 @@ if (($data = $mform->get_data()) && confirm_sesskey()) {
     }
     if (!isset($data->vericite_store_inst_index_default_forums_hideinstructor)) {
         $data->vericite_store_inst_index_default_forums_hideinstructor = 0;
+    }
+    if (!isset($data->vericite_enabled_student_preview_default_forums)) {
+        $data->vericite_enabled_student_preview_default_forums = 0;
+    }
+    if (!isset($data->vericite_enabled_student_preview_default_forums_hideinstructor)) {
+        $data->vericite_enabled_student_preview_default_forums_hideinstructor = 0;
     }
 
     // Save each setting.

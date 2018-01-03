@@ -357,6 +357,9 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
                         $apiArgs['user_id_filter'] = null;
                         $apiArgs['token_user_role'] = 'Instructor';
                     }
+                    $apiArgs['token_user_first_name'] = $USER->firstname;
+                    $apiArgs['token_user_last_name'] = $USER->lastname;
+                    $apiArgs['token_user_email'] = $USER->email;
 
                     $urls = plagiarism_vericite_call_api($plagiarismsettings['vericite_api'], PLAGIARISM_VERICITE_ACTION_REPORTS_URLS, $apiArgs);
                     if (is_array($urls) && count($urls) > 0) {
@@ -465,6 +468,14 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
                     }
                 }
 
+                if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_enabled_student_preview_default_hideinstructor', false) == 1) {
+                    if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_enabled_student_preview_default', true) == 1) {
+                        $data->plagiarism_enabled_student_preview = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_enabled_student_preview_default', true);
+                    } else {
+                        unset($data->plagiarism_enabled_student_preview);
+                    }
+                }
+
             } else if (strcmp("forum", $data->modulename) == 0) {
                 if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums_hideinstructor', false) == 1) {
                     if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_exclude_quotes_default_forums', true) == 1) {
@@ -487,6 +498,14 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
                         $data->plagiarism_store_inst_index = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_store_inst_index_default_forums', true);
                     } else {
                         unset($data->plagiarism_store_inst_index);
+                    }
+                }
+
+                if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_enabled_student_preview_default_forums_hideinstructor', false) == 1) {
+                    if (plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_enabled_student_preview_default_forums', true) == 1) {
+                        $data->plagiarism_enabled_student_preview = plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_enabled_student_preview_default_forums', true);
+                    } else {
+                        unset($data->plagiarism_enabled_student_preview);
                     }
                 }
             }
@@ -523,6 +542,7 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
                 $assignmentinfo['assignment_exclude_quotes'] = (!empty($data->plagiarism_exclude_quotes) && $data->plagiarism_exclude_quotes == 1) ? true : false;
                 $assignmentinfo['assignment_exclude_self_plag'] = (!empty($data->plagiarism_exclude_self_plag) && $data->plagiarism_exclude_self_plag == 1) ? true : false;
                 $assignmentinfo['assignment_store_in_index'] = (!empty($data->plagiarism_store_inst_index) && $data->plagiarism_store_inst_index == 1) ? true : false;
+                $assignmentinfo['assignment_enable_student_preview'] = (!empty($data->plagiarism_enabled_student_preview) && $data->plagiarism_enabled_student_preview == 1) ? true : false;
 
                 $assignmentinfo['assignment_due_date'] = isset($data->duedate) ? $data->duedate * 1000 : '';  //VeriCite expects the time to be in milliseconds
                 // Pass in 0 to delete a grade, otherwise, set the grade.
@@ -646,11 +666,30 @@ class plagiarism_plugin_vericite extends plagiarism_plugin
             $mform->setDefault('vericite_student_score_default', true);
         }
 
+        // Enable Student Preview
+        if (!((strcmp("mod_assign", $modulename) == 0 && plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_enabled_student_preview_default_hideinstructor', false) == 1)
+            || (strcmp("mod_forum", $modulename) == 0  && plagiarism_vericite_get_setting_boolean($plagiarismsettings, 'vericite_enabled_student_preview_default_forums_hideinstructor', false) == 1)            )
+        ) {
+            $mform->addElement('checkbox', 'plagiarism_enabled_student_preview', get_string("enablestupreviewvericite", "plagiarism_vericite"));
+            $mform->addHelpButton('plagiarism_enabled_student_preview', 'enablestupreviewvericite', 'plagiarism_vericite');
+            $mform->disabledIf('plagiarism_enabled_student_preview', 'use_vericite');
+            // Only show DB saved setting if use_vericite is enabled, otherwise, only show defaults.
+            if (!empty($plagiarismvalues['use_vericite']) && isset($plagiarismvalues['plagiarism_enabled_student_preview'])) {
+                $mform->setDefault('plagiarism_enabled_student_preview', $plagiarismvalues['plagiarism_enabled_student_preview']);
+            } else if (strcmp("mod_forum", $modulename) != 0 && isset($plagiarismsettings['vericite_enabled_student_preview_default'])) {
+                $mform->setDefault('plagiarism_enabled_student_preview', $plagiarismsettings['vericite_enabled_student_preview_default']);
+            } else if (strcmp("mod_forum", $modulename) == 0 && isset($plagiarismsettings['vericite_enabled_student_preview_default_forums'])) {
+                $mform->setDefault('plagiarism_enabled_student_preview', $plagiarismsettings['vericite_enabled_student_preview_default_forums']);
+            }
+
+            $mform->setDefault('vericite_student_score_default', false);
+        }
+
     }
 
     public function config_options() 
     {
-        return array('use_vericite', 'plagiarism_show_student_score', 'plagiarism_show_student_report', 'plagiarism_exclude_quotes', 'plagiarism_exclude_self_plag', 'plagiarism_store_inst_index');
+        return array('use_vericite', 'plagiarism_show_student_score', 'plagiarism_show_student_report', 'plagiarism_exclude_quotes', 'plagiarism_exclude_self_plag', 'plagiarism_store_inst_index', 'plagiarism_enabled_student_preview');
     }
 
     /**
@@ -866,13 +905,13 @@ function plagiarism_vericite_call_api($host_url, $action, $args) {
                 $result = $assignments_api->createUpdateAssignment($args['context_id'], $args['assignment_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_data']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_SUBMIT_REQUEST:
-                $result = $reports_api->submitRequest($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data'], null, "true");
+                $result = $reports_api->submitRequest($args['context_id'], $args['assignment_id'], $args['user_id'], $args['consumer'], $args['consumer_secret'], $args['report_meta_data'], null, "true", $args['product_family_code'], $args['product_tool_code']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_SCORES:
                 $result = $reports_api->getScores($args['context_id'], $args['consumer'], $args['consumer_secret'], $args['assignment_id'], $args['user_id'], $args['external_content_id']);
                 break;
             case PLAGIARISM_VERICITE_ACTION_REPORTS_URLS:
-                $result = $reports_api->getReportUrls($args['context_id'], $args['assignment_id_filter'], $args['consumer'], $args['consumer_secret'], $args['token_user'], $args['token_user_role'], $args['user_id_filter'], $args['external_content_id_filter']);
+                $result = $reports_api->getReportUrls($args['context_id'], $args['assignment_id_filter'], $args['consumer'], $args['consumer_secret'], $args['token_user'], $args['token_user_role'], $args['token_user_first_name'], $args['token_user_last_name'], $args['token_user_email'], $args['user_id_filter'], $args['external_content_id_filter']);
                 break;
             }
             $success = true;
